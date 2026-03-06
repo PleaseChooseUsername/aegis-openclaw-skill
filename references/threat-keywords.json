@@ -1,0 +1,83 @@
+{
+  "version": "1.0.0",
+  "description": "Multi-language threat keyword patterns for AEGIS scanner. Patterns are regex. Grouped by severity.",
+  "critical": {
+    "description": "Immediate threat to life — triggers instant alert",
+    "patterns": {
+      "en": [
+        "(attack|strike|missile|intercept|explosion|blast|siren|incoming).*(dubai|abu.dhabi|uae|emirates|sharjah)",
+        "(dubai|abu.dhabi|uae|emirates|sharjah).*(attack|strike|missile|hit|intercept|casualt|explosion)",
+        "(airport|airspace).*(closed|suspended|shutdown|evacuati|emergency)",
+        "nuclear.*(weapon|attack|strike|device)",
+        "chemical.*(weapon|attack|agent)",
+        "biological.*(weapon|attack|agent)",
+        "(evacuat|shelter).*(order|mandatory|immediate)",
+        "civil.defense.*(siren|alert|warning|activation)",
+        "(strait|hormuz).*(closed|blocked|mined|attack)",
+        "mass.casualt",
+        "active.shooter",
+        "dirty.bomb"
+      ],
+      "ar": [
+        "هجوم|ضربة|صاروخ|انفجار|صفارة.إنذار|إخلاء",
+        "دبي|أبو.ظبي|الإمارات|الشارقة",
+        "دفاع.مدني|حالة.طوارئ",
+        "سلاح.نووي|سلاح.كيميائي|سلاح.بيولوجي"
+      ]
+    }
+  },
+  "high": {
+    "description": "Significant threat — batched alert, prepare",
+    "patterns": {
+      "en": [
+        "(iran|tehran).*(launch|missile|drone|retaliat|escalat|attack|strike)",
+        "(gulf|gcc|arabian).*(missile|drone|attack|strike|tension|escalat)",
+        "(hezbollah|houthi).*(launch|attack|missile|drone|strike)",
+        "oil.*(spike|surge|crisis|embargo|cutoff)",
+        "flight.*(cancel|suspend|divert|ground|ban|restriction)",
+        "(bank|atm).*(run|shortage|limit|freeze|closure)",
+        "food.*(shortage|panic|hoarding|rationing)",
+        "ceasefire|peace.talk|negotiat|de-escalat|truce",
+        "war.*(expand|spread|widen|new.front)",
+        "military.*(buildup|deployment|reinforcement|mobiliz)",
+        "(power|water|internet|telecom).*(outage|disruption|shutdown|cut)",
+        "border.*(closed|restricted|shutdown)",
+        "martial.law|curfew|lockdown",
+        "embassy.*(close|evacuat|reduce.staff|warning)"
+      ],
+      "ar": [
+        "إيران|طهران|حزب.الله|الحوثي",
+        "صاروخ|طائرة.مسيرة|انتقام|تصعيد",
+        "حظر.تجول|أحكام.عرفية|إغلاق",
+        "وقف.إطلاق.النار|مفاوضات|هدنة"
+      ]
+    }
+  },
+  "medium": {
+    "description": "Situational awareness — included in digests",
+    "patterns": {
+      "en": [
+        "(iran|tehran).*(threat|warn|capabilit|defense|sanction)",
+        "(us|american).*(deploy|carrier|strike.group|reinforce|base)",
+        "(israel|idf).*(iran|strike|bomb|operation|retaliat)",
+        "(russia|china).*(gulf|iran|mediat|veto|support|supply)",
+        "(refugee|migration|displacement|exodus)",
+        "(sanction|embargo|blockade|restriction)",
+        "gold.*(price|spike|surge)",
+        "oil.price",
+        "currency.*(crash|devalue|volatil)",
+        "supply.chain.*(disrupt|delay|shortage)",
+        "humanitarian.*(crisis|corridor|aid)",
+        "cyber.*(attack|breach|threat|warfare)",
+        "propaganda|disinformation|fake.news|hoax",
+        "(un|united.nations).*(resolution|vote|session|condemn)"
+      ],
+      "ar": [
+        "عقوبات|حصار|حظر",
+        "لاجئ|نزوح|هجرة",
+        "أمم.متحدة|مجلس.الأمن",
+        "حرب.سيبرانية|هجوم.إلكتروني"
+      ]
+    }
+  }
+}

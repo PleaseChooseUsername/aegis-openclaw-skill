@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+aegis-config.json
+seen_hashes.json
+pending_alerts.json
+scan_log.json
+*.skill
+.env

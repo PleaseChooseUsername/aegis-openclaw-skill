@@ -1,0 +1,229 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-03-06",
+  "sources": [
+    {
+      "id": "gdacs",
+      "name": "GDACS (Global Disaster Alert)",
+      "url": "https://www.gdacs.org/xml/rss.xml",
+      "type": "rss",
+      "tier": 0,
+      "countries": ["global"],
+      "category": "emergency",
+      "parser": "xml_rss",
+      "description": "UN/EU global disaster alerts with CAP format"
+    },
+    {
+      "id": "us_travel_advisory",
+      "name": "US State Dept Travel Advisories",
+      "url": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html/",
+      "type": "web",
+      "tier": 0,
+      "countries": ["global"],
+      "category": "government",
+      "parser": "html_scrape",
+      "description": "US government travel advisories per country"
+    },
+    {
+      "id": "uk_fcdo",
+      "name": "UK FCDO Travel Advice",
+      "url_template": "https://www.gov.uk/foreign-travel-advice/{country_slug}",
+      "type": "web",
+      "tier": 0,
+      "countries": ["global"],
+      "category": "government",
+      "parser": "html_scrape",
+      "description": "UK government foreign travel advice"
+    },
+    {
+      "id": "uae_ncema",
+      "name": "UAE NCEMA",
+      "url": "https://www.ncema.gov.ae/en",
+      "type": "web",
+      "tier": 0,
+      "countries": ["AE"],
+      "category": "emergency",
+      "parser": "html_scrape",
+      "description": "UAE National Emergency Crisis and Disaster Management Authority"
+    },
+    {
+      "id": "uae_mofaic",
+      "name": "UAE Ministry of Foreign Affairs",
+      "url": "https://www.mofaic.gov.ae/en",
+      "type": "web",
+      "tier": 0,
+      "countries": ["AE"],
+      "category": "government",
+      "parser": "html_scrape",
+      "description": "UAE foreign affairs and security updates"
+    },
+    {
+      "id": "us_embassy_uae",
+      "name": "US Embassy UAE",
+      "url": "https://ae.usembassy.gov/u-s-citizen-services/security-and-travel-information/",
+      "type": "web",
+      "tier": 0,
+      "countries": ["AE"],
+      "category": "government",
+      "parser": "html_scrape",
+      "description": "US Embassy UAE security alerts"
+    },
+    {
+      "id": "aljazeera_rss",
+      "name": "Al Jazeera (All)",
+      "url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "type": "rss",
+      "tier": 1,
+      "countries": ["global"],
+      "category": "news",
+      "parser": "xml_rss",
+      "description": "Al Jazeera breaking news and world coverage"
+    },
+    {
+      "id": "aljazeera_gulf",
+      "name": "Al Jazeera Gulf",
+      "url": "https://www.aljazeera.com/tag/gulf/",
+      "type": "web",
+      "tier": 1,
+      "countries": ["AE", "BH", "KW", "OM", "QA", "SA"],
+      "category": "news",
+      "parser": "html_scrape",
+      "description": "Al Jazeera Gulf region coverage"
+    },
+    {
+      "id": "reuters_mideast",
+      "name": "Reuters Middle East",
+      "url": "https://www.reuters.com/world/middle-east/",
+      "type": "web",
+      "tier": 1,
+      "countries": ["AE", "BH", "IL", "IQ", "IR", "JO", "KW", "LB", "OM", "PS", "QA", "SA", "SY", "YE"],
+      "category": "news",
+      "parser": "html_scrape",
+      "description": "Reuters Middle East news"
+    },
+    {
+      "id": "bbc_world_rss",
+      "name": "BBC World News",
+      "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "type": "rss",
+      "tier": 1,
+      "countries": ["global"],
+      "category": "news",
+      "parser": "xml_rss",
+      "description": "BBC World news feed"
+    },
+    {
+      "id": "france24_rss",
+      "name": "France24 English",
+      "url": "https://www.france24.com/en/rss",
+      "type": "rss",
+      "tier": 1,
+      "countries": ["global"],
+      "category": "news",
+      "parser": "xml_rss",
+      "description": "France24 international news"
+    },
+    {
+      "id": "national_uae",
+      "name": "The National (UAE)",
+      "url": "https://www.thenationalnews.com/uae/",
+      "type": "web",
+      "tier": 1,
+      "countries": ["AE"],
+      "category": "news",
+      "parser": "html_scrape",
+      "description": "UAE's leading English-language newspaper"
+    },
+    {
+      "id": "national_gulf",
+      "name": "The National (Gulf)",
+      "url": "https://www.thenationalnews.com/gulf-news/",
+      "type": "web",
+      "tier": 1,
+      "countries": ["AE", "BH", "KW", "OM", "QA", "SA"],
+      "category": "news",
+      "parser": "html_scrape",
+      "description": "Gulf-wide news coverage"
+    },
+    {
+      "id": "guardian_iran",
+      "name": "The Guardian — Iran",
+      "url": "https://www.theguardian.com/world/iran",
+      "type": "web",
+      "tier": 1,
+      "countries": ["IR", "AE", "IL"],
+      "category": "news",
+      "parser": "html_scrape",
+      "description": "Guardian Iran and related conflict coverage"
+    },
+    {
+      "id": "faa_notams_dxb",
+      "name": "FAA NOTAMs — Dubai (OMDB)",
+      "url": "https://www.notams.faa.gov/dinsQueryWeb/queryRetrievalMapAction.do?reportType=Raw&retrieveLocId=OMDB",
+      "type": "web",
+      "tier": 2,
+      "countries": ["AE"],
+      "category": "aviation",
+      "parser": "html_scrape",
+      "description": "Dubai airport NOTAMs — closures, TFRs, restrictions"
+    },
+    {
+      "id": "faa_notams_auh",
+      "name": "FAA NOTAMs — Abu Dhabi (OMAA)",
+      "url": "https://www.notams.faa.gov/dinsQueryWeb/queryRetrievalMapAction.do?reportType=Raw&retrieveLocId=OMAA",
+      "type": "web",
+      "tier": 2,
+      "countries": ["AE"],
+      "category": "aviation",
+      "parser": "html_scrape",
+      "description": "Abu Dhabi airport NOTAMs"
+    },
+    {
+      "id": "crisis_group_gulf",
+      "name": "International Crisis Group — Gulf",
+      "url": "https://www.crisisgroup.org/middle-east-north-africa/gulf-and-arabian-peninsula",
+      "type": "web",
+      "tier": 3,
+      "countries": ["AE", "BH", "KW", "OM", "QA", "SA", "IR"],
+      "category": "analysis",
+      "parser": "html_scrape",
+      "description": "Expert conflict analysis — Gulf and Arabian Peninsula"
+    },
+    {
+      "id": "war_on_rocks",
+      "name": "War on the Rocks",
+      "url": "https://warontherocks.com/",
+      "type": "web",
+      "tier": 3,
+      "countries": ["global"],
+      "category": "analysis",
+      "parser": "html_scrape",
+      "description": "Military and security analysis"
+    },
+    {
+      "id": "gdelt_api",
+      "name": "GDELT Project",
+      "url_template": "https://api.gdeltproject.org/api/v2/doc/doc?query={query}&mode=artlist&maxrecords=25&format=json",
+      "type": "api",
+      "tier": 3,
+      "countries": ["global"],
+      "category": "aggregator",
+      "parser": "json_api",
+      "description": "Global event database — no API key needed, query-based",
+      "requires_key": false
+    },
+    {
+      "id": "newsapi",
+      "name": "NewsAPI.org",
+      "url_template": "https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&language={lang}&apiKey={key}",
+      "type": "api",
+      "tier": 4,
+      "countries": ["global"],
+      "category": "aggregator",
+      "parser": "json_api",
+      "description": "News aggregator API — optional, 100 req/day free",
+      "requires_key": true,
+      "key_name": "newsapi"
+    }
+  ]
+}
