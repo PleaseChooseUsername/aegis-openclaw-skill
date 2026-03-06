@@ -245,6 +245,51 @@ def fetch_web(url, max_chars=8000):
     except Exception as e:
         return []
 
+def fetch_liveuamap(url, max_items=25):
+    """Fetch events from LiveUAMap pages (structured HTML with data-* attributes)."""
+    try:
+        result = subprocess.run(
+            ["curl", "-sL", "--max-time", "15", "--compressed",
+             "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+             "-H", "Accept: text/html,application/xhtml+xml",
+             url],
+            capture_output=True, text=True, timeout=20
+        )
+        if result.returncode != 0 or not result.stdout:
+            return []
+        
+        html = result.stdout
+        items = []
+        
+        # Extract structured events from data-link and title attributes
+        # Pattern: <div ... data-link="URL" ... class="event ..." ...>
+        #   <a ... title="HEADLINE" ...>LOCATION</a>
+        #   <span class="date_add">TIME AGO</span>
+        event_blocks = re.findall(
+            r'data-link="([^"]+)"[^>]*data-id="(\d+)"[^>]*class="event[^"]*".*?'
+            r'title="([^"]*)"[^>]*>([^<]*)<.*?'
+            r'class="date_add">([^<]*)<',
+            html, re.DOTALL
+        )
+        
+        for link, evt_id, title, location, time_ago in event_blocks[:max_items]:
+            title = title.replace('&#039;', "'").replace('&amp;', '&').replace('&quot;', '"').strip()
+            location = location.strip()
+            if not title or len(title) < 10:
+                continue
+            
+            items.append({
+                "title": title,
+                "description": f"{location} — {time_ago.strip()}",
+                "url": link,
+                "published": time_ago.strip(),
+                "raw": f"{title}. {location}"
+            })
+        
+        return items
+    except Exception as e:
+        return []
+
 def fetch_json_api(url_template, config, source):
     """Fetch from JSON API endpoint."""
     try:
@@ -304,6 +349,8 @@ def fetch_source(source, config):
         return fetch_rss(url)
     elif src_type == "web":
         return fetch_web(url)
+    elif src_type == "liveuamap":
+        return fetch_liveuamap(url)
     elif src_type == "api":
         return fetch_json_api(url, config, source)
     return []

@@ -224,6 +224,39 @@
       "description": "News aggregator API — optional, 100 req/day free",
       "requires_key": true,
       "key_name": "newsapi"
+    },
+    {
+      "id": "liveuamap_iran",
+      "name": "LiveUAMap — Iran",
+      "url": "https://iran.liveuamap.com/",
+      "type": "liveuamap",
+      "tier": 2,
+      "countries": ["IR", "AE", "IQ", "KW", "BH", "SA", "QA", "OM", "global"],
+      "category": "osint_map",
+      "parser": "liveuamap_html",
+      "description": "Real-time crowdsourced conflict map — near-instant event reporting with geolocation. Events sourced from verified media, official statements, and field reporters."
+    },
+    {
+      "id": "liveuamap_ukraine",
+      "name": "LiveUAMap — Ukraine",
+      "url": "https://liveuamap.com/",
+      "type": "liveuamap",
+      "tier": 2,
+      "countries": ["UA", "RU", "PL", "RO", "global"],
+      "category": "osint_map",
+      "parser": "liveuamap_html",
+      "description": "Real-time Ukraine conflict map — events from frontlines, air alerts, infrastructure hits"
+    },
+    {
+      "id": "liveuamap_israel",
+      "name": "LiveUAMap — Israel",
+      "url": "https://israel.liveuamap.com/",
+      "type": "liveuamap",
+      "tier": 2,
+      "countries": ["IL", "LB", "PS", "SY", "global"],
+      "category": "osint_map",
+      "parser": "liveuamap_html",
+      "description": "Real-time Israel/Palestine conflict map — rocket alerts, military operations, ground events"
     }
   ]
 }
