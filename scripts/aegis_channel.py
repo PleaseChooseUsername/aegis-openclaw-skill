@@ -41,7 +41,7 @@ def load_env():
     
     return token, channel
 
-def send_telegram(token, channel_id, text, parse_mode=""):
+def send_telegram(token, channel_id, text, parse_mode="", pin=False):
     """Send message to Telegram channel. Plain text by default for reliability."""
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = json.dumps({
@@ -54,7 +54,24 @@ def send_telegram(token, channel_id, text, parse_mode=""):
     req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
     try:
         resp = urllib.request.urlopen(req, timeout=15)
-        return json.loads(resp.read())
+        result = json.loads(resp.read())
+        
+        # Auto-pin if requested
+        if pin and result.get("ok"):
+            msg_id = result["result"]["message_id"]
+            pin_url = f"https://api.telegram.org/bot{token}/pinChatMessage"
+            pin_payload = json.dumps({
+                "chat_id": channel_id,
+                "message_id": msg_id,
+                "disable_notification": True
+            }).encode()
+            pin_req = urllib.request.Request(pin_url, data=pin_payload, headers={"Content-Type": "application/json"})
+            try:
+                urllib.request.urlopen(pin_req, timeout=10)
+            except Exception:
+                pass  # Pin failure is non-critical
+        
+        return result
     except Exception as e:
         # Retry without parse_mode
         try:
@@ -227,7 +244,7 @@ def main():
         
         msg = format_critical_alert(data)
         if msg:
-            result = send_telegram(token, channel, msg)
+            result = send_telegram(token, channel, msg, pin=True)
             print(json.dumps(result, indent=2))
         else:
             print("[AEGIS] No critical threats to post", file=sys.stderr)
@@ -247,7 +264,7 @@ def main():
                 scan_data = json.load(f)
         
         msg = format_briefing(data, scan_data)
-        result = send_telegram(token, channel, msg)
+        result = send_telegram(token, channel, msg, pin=True)
         print(json.dumps(result, indent=2))
     
     elif action == "status":
