@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenClaw Skill](https://img.shields.io/badge/OpenClaw-Skill-blue.svg)](https://openclaw.ai)
-[![ClawHub](https://img.shields.io/badge/ClawHub-aegis-orange.svg)](https://clawhub.com)
+[![ClawHub](https://img.shields.io/badge/ClawHub-aegis@1.4.0-orange.svg)](https://clawhub.com)
 
 </div>
 
@@ -16,26 +16,63 @@
 
 ## What is AEGIS?
 
-AEGIS is an open-source [OpenClaw](https://openclaw.ai) skill that turns your AI agent into a personal security intelligence system. It monitors 19+ news sources every 15 minutes and delivers actionable threat assessments in your language, to your preferred messaging channel.
+AEGIS is an open-source [OpenClaw](https://openclaw.ai) skill that monitors 23+ news and intelligence sources every 15 minutes and delivers actionable threat assessments to your preferred messaging channel.
 
-**Built during the 2026 Iran-US conflict** by a civilian in Dubai who needed better situational awareness than doom-scrolling could provide.
+**Built during the 2026 Iran-US conflict** by a civilian in Dubai who needed better situational awareness than news apps could provide.
 
-### What AEGIS Does
+### What It Does
 
-- 🔴 **Instant critical alerts** — missile strikes, airport closures, evacuations
-- 📊 **Morning & evening briefings** — aggregated threat assessment with trend analysis
-- 🌍 **Location-aware** — monitors sources relevant to YOUR country and city
-- 🛡️ **Anti-hoax protocol** — official sources first, verified media second, social media never triggers alerts
-- 🌐 **Multi-language** — briefings delivered in your language via LLM translation
-- 📱 **Channel-agnostic** — Telegram, WhatsApp, Discord, Signal, SMS
-- 💰 **Free baseline** — zero API keys required. All 19 sources use public RSS/web feeds
+- 🔴 **Instant critical alerts** — only for immediate physical danger (missiles inbound, shelter orders, airport shutdowns)
+- 📊 **Twice-daily briefings** — morning & evening situation reports with threat level and trend analysis
+- 🌍 **Location-aware** — filters 23+ sources for YOUR country and neighboring region
+- 🛡️ **Anti-hoax protocol** — official government sources first, verified media second, social media excluded
+- 🌐 **Multi-language** — keyword detection in English and Arabic; briefings in your language
+- 📱 **Channel-agnostic** — Telegram, WhatsApp, Discord, Signal, or any OpenClaw channel
+- 💰 **Free baseline** — zero API keys needed for all 23 core sources
 
-### What AEGIS Is NOT
+### What It Is NOT
 
-- ❌ Not a panic tool — realistic, factual, follows official government guidance
-- ❌ Not social media aggregation — no Twitter/X, no unverified rumors
-- ❌ Not a replacement for official emergency systems — it's the intelligence layer *above* them
-- ❌ Not military-grade — it's for civilians who want to make informed decisions
+- Not a panic tool — factual, follows official government guidance
+- Not social media aggregation — no Twitter/X, no unverified rumors
+- Not a replacement for official emergency systems — it's the intelligence layer above them
+
+---
+
+## Sources (23+)
+
+AEGIS aggregates from multiple source tiers:
+
+| Tier | Type | Sources | Examples |
+|------|------|---------|----------|
+| 0 🏛️ | Government & Emergency | 6 | GDACS, NCEMA, US/UK embassies, MOFAIC |
+| 1 📰 | Major News Agencies | 8 | Al Jazeera, Reuters, BBC, France24, The National |
+| 2 🔍 | OSINT & Conflict Mapping | 4 | World Monitor (168 geolocated zones), LiveUAMap (3 regions) |
+| 2 ✈️ | Aviation | 2 | FAA NOTAMs (DXB, AUH) |
+| 3 📋 | Analysis | 2 | Crisis Group, War on the Rocks |
+| 4 🔑 | API-Enhanced (optional) | 1+ | NewsAPI (free tier), GDELT |
+
+**All sources are free.** No API keys required for the baseline 23 sources. The scanner uses `curl` — no extra Python packages needed.
+
+### Source Verification
+
+| Source Tier | Trust Level | Alert Behavior |
+|-------------|-------------|----------------|
+| Tier 0-1 | Verified | Can trigger alerts directly |
+| Tier 2 | Domain-trusted | Trusted within their domain; requires context |
+| Tier 3+ | Corroboration needed | Must be confirmed by Tier 0-1 source |
+| Social media | Excluded | Not included. Period. |
+
+---
+
+## Alert Classification
+
+| Level | Meaning | Channel Behavior |
+|-------|---------|-----------------|
+| 🔴 CRITICAL | Immediate physical danger **in your country** — missiles inbound, sirens, shelter/evacuation orders, airport shutdown, CBRN | **Instant push + pin** |
+| 🟠 HIGH | Significant regional threat — attacks on neighbors, strait disrupted, flights cancelled, military buildup | **Included in briefings** |
+| ℹ️ MEDIUM | Situational awareness — regional strikes, diplomacy, oil prices, sanctions, cyber | **Included in briefings** |
+
+CRITICAL is reserved for "act now" situations. Regional developments (neighboring countries under attack, Hormuz disruptions, economic impacts) are HIGH — important context, but not "run to shelter."
 
 ---
 
@@ -44,15 +81,15 @@ AEGIS is an open-source [OpenClaw](https://openclaw.ai) skill that turns your AI
 ### 1. Install
 
 ```bash
-# If you have OpenClaw + ClawHub:
+# Via ClawHub:
 clawhub install aegis
 
 # Or manually:
 git clone https://github.com/PleaseChooseUsername/aegis-openclaw-skill.git
-cp -r aegis-openclaw-skill/aegis ~/.openclaw/skills/
+cp -r aegis-openclaw-skill/ ~/.openclaw/skills/aegis/
 ```
 
-### 2. Onboard
+### 2. Configure
 
 Tell your OpenClaw agent:
 > "Set up AEGIS for my location"
@@ -62,121 +99,102 @@ Or run directly:
 python3 ~/.openclaw/skills/aegis/scripts/aegis_onboard.py
 ```
 
-This creates `~/.openclaw/aegis-config.json` with your location, language, and alert preferences.
+Creates `~/.openclaw/aegis-config.json` with your location, language, and preferences.
 
 ### 3. First Scan
 
-> "Run an AEGIS scan"
-
-Or:
 ```bash
 python3 ~/.openclaw/skills/aegis/scripts/aegis_scanner.py
 ```
 
-### 4. Set Up Monitoring
+### 4. Automated Monitoring
 
 Tell your agent:
-> "Set up AEGIS to scan every 15 minutes and send me critical alerts"
+> "Set up AEGIS cron jobs — scan every 15 minutes, morning and evening briefings"
 
-Your agent will create OpenClaw cron jobs for:
-- Every 15 min: background scan
-- Morning: daily briefing
-- Evening: situation summary
+This creates three cron jobs:
+- **Every 15 min**: silent background scan, posts only on CRITICAL
+- **Morning**: situation report with overnight developments
+- **Evening**: end-of-day summary with threat trend
 
 ---
 
-## How It Works
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
 │                    AEGIS                         │
 │                                                  │
 │  ┌──────────┐    ┌──────────┐    ┌──────────┐  │
-│  │  SOURCE   │    │ CLASSIFY │    │ DELIVER  │  │
-│  │  FETCHER  │───▶│ + DEDUP  │───▶│ + BRIEF  │  │
+│  │  23+      │    │ CLASSIFY │    │ DELIVER  │  │
+│  │  SOURCES  │───▶│ + DEDUP  │───▶│ + BRIEF  │  │
 │  └──────────┘    └──────────┘    └──────────┘  │
 │       │                │               │        │
-│  19 sources       Keyword DB      OpenClaw      │
-│  RSS + Web       Anti-hoax       Messaging      │
-│  No API keys     Tiered alert    Any channel    │
+│  RSS + Web +      SHA-256 dedup    Telegram     │
+│  JSON APIs       Keyword match     or any       │
+│  Zero cost       Anti-hoax tier    channel      │
 └─────────────────────────────────────────────────┘
-
-Source Tiers:
-  Tier 0 🏛️  Government & Emergency (GDACS, NCEMA, Embassies)
-  Tier 1 📰  Major News Agencies (Al Jazeera, Reuters, BBC, France24)
-  Tier 2 ✈️  Aviation & Infrastructure (FAA NOTAMs)
-  Tier 3 🔍  Analysis & OSINT (Crisis Group, GDELT)
-  Tier 4 🔑  API-Enhanced (NewsAPI — optional, needs free key)
-
-Alert Tiers:
-  🔴 CRITICAL — Immediate threat to life → instant push
-  🟠 HIGH     — Significant regional development → batched (30 min)
-  ℹ️  MEDIUM   — Situational awareness → digest (6 hours)
 ```
 
-### Anti-Hoax Protocol
+**Deduplication**: SHA-256 content hashing with 48-hour sliding window prevents repeat alerts.
 
-| Source Tier | Trust Level | Alert Behavior |
-|-------------|-------------|----------------|
-| Tier 0-1 | HIGH | Can trigger alerts directly |
-| Tier 2 | DOMAIN | Trusted within their domain only |
-| Tier 3+ | REQUIRES CORROBORATION | Must be confirmed by Tier 0-1 |
-| Social media | NEVER | Not included. Period. |
-
-Single-source sensational claims are flagged as **UNVERIFIED**. Extraordinary claims require 3+ independent sources.
-
----
-
-## What's Free, What's Optional
-
-### Free (Zero API Keys)
-
-All 19 baseline sources are free:
-- **RSS feeds**: GDACS, Al Jazeera, BBC, France24, Reuters (via web)
-- **Web scraping**: Government sites, embassy pages, news portals
-- **GDELT Project**: Free API, no key required
-
-The scanner uses `curl` for all fetching — no Python HTTP libraries needed beyond the standard library.
-
-**LLM cost**: Your OpenClaw agent processes scan results. With GitHub Copilot (included in many dev subscriptions), this is effectively free. With OpenRouter or other providers, expect ~$0.03-0.05/day.
-
-### Optional Enhancements
-
-| Service | What It Adds | Cost |
-|---------|-------------|------|
-| [NewsAPI](https://newsapi.org/register) | 80,000+ news sources, better coverage | Free tier: 100 req/day |
-| Perplexity (via OpenRouter) | AI-synthesized web search for context | ~$0.01/query |
-| liveuamap.com | Crowd-sourced conflict mapping | Manual (no API) |
-
-To add optional sources, put API keys in your config:
-```json
-{
-  "api_keys": {
-    "newsapi": "your-key-here"
-  }
-}
-```
+**Keyword matching**: Regex patterns in English and Arabic, tiered by severity. Location-specific patterns ensure "attack on Kuwait" ≠ CRITICAL for a UAE user (it's HIGH).
 
 ---
 
 ## Supported Countries
 
-AEGIS works for **any country** — global sources (GDACS, BBC, Al Jazeera) cover everywhere.
+AEGIS works for **any country** — global sources (GDACS, BBC, Al Jazeera, World Monitor) cover everywhere.
 
 ### Countries with Dedicated Profiles
 
-These have localized emergency contacts, evacuation routes, shelter locations, and infrastructure notes:
+| Country | Code | Emergency Contacts | Evacuation Routes | Shelter Guidance |
+|---------|------|-------------------|-------------------|-----------------|
+| 🇦🇪 UAE | `AE` | ✅ | ✅ | ✅ |
 
-| Country | Code | Status |
-|---------|------|--------|
-| 🇦🇪 UAE | `AE` | ✅ Full profile |
-| 🇮🇱 Israel | `IL` | 🔜 Coming soon |
-| 🇺🇦 Ukraine | `UA` | 🔜 Coming soon |
-| 🇱🇧 Lebanon | `LB` | 🔜 Coming soon |
+**Want your country added?** Copy `references/country-profiles/_template.json`, fill in your country's details, and submit a PR.
 
-### Contributing a Country Profile
+---
 
-Copy `references/country-profiles/_template.json`, fill in your country's details, and submit a PR. You could save lives.
+## Preparedness Resources
+
+Included in the skill (available to your agent during briefings):
+
+- **[Go-Bag Checklist](references/preparedness/go-bag-checklist.md)** — leave in 2 minutes
+- **[Communication Plan](references/preparedness/communication-plan.md)** — stay connected when networks fail
+- **[Shelter Guidance](references/preparedness/shelter-guidance.md)** — where to go, what to do
+- **[Evacuation Guidance](references/preparedness/evacuation-guidance.md)** — routes, transport, embassy registration
+
+---
+
+## Requirements
+
+- **OpenClaw** (any recent version)
+- **Python 3.8+**
+- **curl** (pre-installed on virtually all systems)
+- No additional Python packages
+
+**LLM cost**: With GitHub Copilot (included in dev subscriptions), effectively free. With OpenRouter or other providers, ~$0.03-0.05/day.
+
+---
+
+## Configuration
+
+Minimal config (`~/.openclaw/aegis-config.json`):
+```json
+{
+  "location": {
+    "country": "AE",
+    "country_code": "AE",
+    "city": "Dubai",
+    "timezone": "Asia/Dubai"
+  },
+  "language": "en",
+  "scan_interval_minutes": 15
+}
+```
+
+See [config-reference.md](references/config-reference.md) for full schema.
 
 ---
 
@@ -186,93 +204,42 @@ Copy `references/country-profiles/_template.json`, fill in your country's detail
 aegis/
 ├── SKILL.md                              # OpenClaw skill definition
 ├── scripts/
-│   ├── aegis_scanner.py                  # Core scanning engine
-│   ├── aegis_onboard.py                  # Interactive setup
-│   └── aegis_briefing.py                 # Briefing generator
+│   ├── aegis_scanner.py                  # Core scanner (23+ sources)
+│   ├── aegis_onboard.py                  # Interactive setup wizard
+│   ├── aegis_briefing.py                 # Briefing generator
+│   ├── aegis_cron.py                     # Silent cron runner
+│   └── aegis_channel.py                  # Channel publisher (Telegram)
 └── references/
-    ├── source-registry.json              # 19 verified sources
-    ├── threat-keywords.json              # EN + AR keyword patterns
-    ├── config-reference.md               # Full configuration docs
+    ├── source-registry.json              # 23 verified sources
+    ├── threat-keywords.json              # EN + AR patterns (v2.0)
+    ├── config-reference.md               # Full config docs
     ├── country-profiles/
     │   ├── uae.json                      # UAE emergency profile
     │   └── _template.json                # Template for contributions
     ├── preparedness/
-    │   ├── go-bag-checklist.md           # Emergency go-bag
-    │   ├── communication-plan.md         # Family comms plan
-    │   ├── shelter-guidance.md           # Shelter-in-place
-    │   └── evacuation-guidance.md        # Evacuation routes & tips
+    │   ├── go-bag-checklist.md
+    │   ├── communication-plan.md
+    │   ├── shelter-guidance.md
+    │   └── evacuation-guidance.md
     └── prompts/
-        └── analysis-system.md            # LLM analysis instructions
+        └── analysis-system.md            # LLM analysis system prompt
 ```
-
----
-
-## Preparedness Resources
-
-AEGIS includes practical, non-panic preparedness guides:
-
-- **[Go-Bag Checklist](aegis/references/preparedness/go-bag-checklist.md)** — What to pack so you can leave in 2 minutes
-- **[Communication Plan](aegis/references/preparedness/communication-plan.md)** — How to stay connected when networks fail
-- **[Shelter Guidance](aegis/references/preparedness/shelter-guidance.md)** — Where to go, what to do, when to stay
-- **[Evacuation Guidance](aegis/references/preparedness/evacuation-guidance.md)** — Routes, transport, embassy registration
-
-These are available to your agent for reference during briefings and can be shared with family.
-
----
-
-## Requirements
-
-- **OpenClaw** (any recent version)
-- **Python 3.8+** (for scripts)
-- **curl** (for fetching — pre-installed on virtually all systems)
-- No additional Python packages required
-
----
-
-## Configuration
-
-See [config-reference.md](aegis/references/config-reference.md) for the full schema.
-
-Minimal config:
-```json
-{
-  "location": { "country": "AE", "city": "Dubai", "timezone": "Asia/Dubai" },
-  "language": "en",
-  "scan_interval_minutes": 15
-}
-```
-
----
-
-## Philosophy
-
-> *"The best time to prepare was yesterday. The second best time is now."*
-
-AEGIS was born out of necessity. When missiles are in the air, you don't want to be refreshing five news tabs trying to figure out if your airport is closed. You want a calm, factual system that tells you what's happening, what it means for you, and what to do about it.
-
-This is not a military tool. It's not a government system. It's a civilian's right to situational awareness — automated, aggregated, and honest.
-
-**Official sources first.** AEGIS follows government guidance. It will never tell you to ignore official emergency channels. But it will tell you what's happening between the alerts, help you understand the bigger picture, and make sure you're not caught off guard.
-
-**No hoaxes, no panic, no drama.** Just information.
 
 ---
 
 ## Contributing
 
-This skill can save lives. Contributions are welcome:
-
 1. **Country profiles** — Add your country's emergency info
 2. **Language keywords** — Add threat detection patterns in your language
-3. **Source additions** — Know a reliable government RSS feed? Add it
+3. **Sources** — Know a reliable government RSS feed or OSINT API? Add it
 4. **Translations** — Help make preparedness guides accessible
-5. **Bug reports** — Found a false positive? Report it
+5. **Bug reports** — False positive? Missing alert? Report it
 
 ---
 
 ## License
 
-MIT License — use it, modify it, share it. If it helps even one person stay safe, it was worth building.
+MIT — use it, modify it, share it. See [LICENSE](LICENSE).
 
 ---
 
