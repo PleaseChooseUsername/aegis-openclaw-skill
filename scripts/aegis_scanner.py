@@ -290,6 +290,84 @@ def fetch_liveuamap(url, max_items=25):
     except Exception as e:
         return []
 
+def fetch_world_monitor(url="https://world-monitor.com/api/signal-markers", config=None, max_items=30):
+    """Fetch conflict location data from World Monitor's public API.
+    Returns geolocated conflict zones with AI-synthesized summaries and key points."""
+    try:
+        result = subprocess.run(
+            ["curl", "-sL", "--max-time", "15",
+             "-H", "User-Agent: Mozilla/5.0 (compatible; AEGIS/1.0)",
+             url],
+            capture_output=True, text=True, timeout=20
+        )
+        if result.returncode != 0 or not result.stdout:
+            return []
+        
+        data = json.loads(result.stdout)
+        locations = data.get("locations", [])
+        
+        # Filter by country if configured
+        target_countries = set()
+        if config:
+            cc = config.get("location", {}).get("country_code", "").upper()
+            profile_path = REFERENCES_DIR / "country-profiles" / f"{cc.lower()}.json"
+            if profile_path.exists():
+                with open(profile_path) as f:
+                    profile = json.load(f)
+                # Include the country itself + neighboring/relevant countries
+                target_countries.add(profile.get("country", ""))
+                for n in profile.get("neighbors", []):
+                    target_countries.add(n)
+                # Also add "global" relevant regions
+                for r in profile.get("regions_of_interest", []):
+                    target_countries.add(r)
+        
+        items = []
+        for loc in locations[:max_items * 2]:  # Over-fetch for filtering
+            country = loc.get("country", "")
+            name = loc.get("location_name", "")
+            summary = loc.get("summary", "")
+            analysis = loc.get("analysis", "")
+            key_points = loc.get("key_points", [])
+            lat = loc.get("lat", 0)
+            lng = loc.get("lng", 0)
+            
+            # Filter: if we have target countries, only include relevant ones
+            if target_countries and country not in target_countries:
+                # Check broader region match (Middle East for UAE)
+                if not any(tc.lower() in country.lower() for tc in target_countries):
+                    continue
+            
+            # Use latest key_point as title if available
+            if key_points:
+                latest = key_points[-1]
+                title = f"{latest.get('point', summary[:120])}"
+                date_str = latest.get("date", "")
+            else:
+                title = summary[:150]
+                date_str = ""
+            
+            items.append({
+                "title": f"[{country}] {title}",
+                "description": f"{name} — {summary[:300]}",
+                "url": f"https://world-monitor.com/",
+                "published": date_str,
+                "raw": f"{name} {country}. {summary}. {analysis[:300]}",
+                "metadata": {
+                    "lat": lat, "lng": lng,
+                    "location": name,
+                    "country": country,
+                    "key_points_count": len(key_points)
+                }
+            })
+            
+            if len(items) >= max_items:
+                break
+        
+        return items
+    except Exception as e:
+        return []
+
 def fetch_json_api(url_template, config, source):
     """Fetch from JSON API endpoint."""
     try:
@@ -351,6 +429,8 @@ def fetch_source(source, config):
         return fetch_web(url)
     elif src_type == "liveuamap":
         return fetch_liveuamap(url)
+    elif src_type == "world_monitor":
+        return fetch_world_monitor(url, config)
     elif src_type == "api":
         return fetch_json_api(url, config, source)
     return []

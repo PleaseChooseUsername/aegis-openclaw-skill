@@ -39,26 +39,74 @@
   },
   "sources": {
     "tier0": [
-      { "id": "uae_ncema", "name": "NCEMA", "url": "https://www.ncema.gov.ae/en" },
-      { "id": "us_embassy_uae", "name": "US Embassy UAE", "url": "https://ae.usembassy.gov/u-s-citizen-services/security-and-travel-information/" },
-      { "id": "uk_fcdo_uae", "name": "UK FCDO UAE", "url": "https://www.gov.uk/foreign-travel-advice/united-arab-emirates" }
+      {
+        "id": "uae_ncema",
+        "name": "NCEMA",
+        "url": "https://www.ncema.gov.ae/en"
+      },
+      {
+        "id": "us_embassy_uae",
+        "name": "US Embassy UAE",
+        "url": "https://ae.usembassy.gov/u-s-citizen-services/security-and-travel-information/"
+      },
+      {
+        "id": "uk_fcdo_uae",
+        "name": "UK FCDO UAE",
+        "url": "https://www.gov.uk/foreign-travel-advice/united-arab-emirates"
+      }
     ],
     "tier1": [
-      { "id": "national_uae", "name": "The National", "url": "https://www.thenationalnews.com/uae/" },
-      { "id": "khaleej_times", "name": "Khaleej Times", "url": "https://www.khaleejtimes.com/uae" },
-      { "id": "gulf_news", "name": "Gulf News", "url": "https://gulfnews.com/uae" }
+      {
+        "id": "national_uae",
+        "name": "The National",
+        "url": "https://www.thenationalnews.com/uae/"
+      },
+      {
+        "id": "khaleej_times",
+        "name": "Khaleej Times",
+        "url": "https://www.khaleejtimes.com/uae"
+      },
+      {
+        "id": "gulf_news",
+        "name": "Gulf News",
+        "url": "https://gulfnews.com/uae"
+      }
     ],
     "tier2": [
-      { "id": "faa_notams_dxb", "name": "NOTAMs DXB", "icao": "OMDB" },
-      { "id": "faa_notams_auh", "name": "NOTAMs AUH", "icao": "OMAA" },
-      { "id": "faa_notams_shj", "name": "NOTAMs SHJ", "icao": "OMSJ" }
+      {
+        "id": "faa_notams_dxb",
+        "name": "NOTAMs DXB",
+        "icao": "OMDB"
+      },
+      {
+        "id": "faa_notams_auh",
+        "name": "NOTAMs AUH",
+        "icao": "OMAA"
+      },
+      {
+        "id": "faa_notams_shj",
+        "name": "NOTAMs SHJ",
+        "icao": "OMSJ"
+      }
     ]
   },
   "airports": {
     "primary": [
-      { "name": "Dubai International", "icao": "OMDB", "iata": "DXB" },
-      { "name": "Abu Dhabi International", "icao": "OMAA", "iata": "AUH" },
-      { "name": "Al Maktoum International", "icao": "OMDW", "iata": "DWC" }
+      {
+        "name": "Dubai International",
+        "icao": "OMDB",
+        "iata": "DXB"
+      },
+      {
+        "name": "Abu Dhabi International",
+        "icao": "OMAA",
+        "iata": "AUH"
+      },
+      {
+        "name": "Al Maktoum International",
+        "icao": "OMDW",
+        "iata": "DWC"
+      }
     ]
   },
   "shelters": {
@@ -72,12 +120,26 @@
     ]
   },
   "evacuation": {
-    "airports": ["DXB", "AUH", "DWC", "SHJ"],
-    "land_borders": [
-      { "name": "Hatta (to Oman)", "notes": "Al Ain road" },
-      { "name": "Khatam Al Shiklah (to Oman)", "notes": "Abu Dhabi side" }
+    "airports": [
+      "DXB",
+      "AUH",
+      "DWC",
+      "SHJ"
     ],
-    "sea_ports": ["Port Rashid", "Jebel Ali"],
+    "land_borders": [
+      {
+        "name": "Hatta (to Oman)",
+        "notes": "Al Ain road"
+      },
+      {
+        "name": "Khatam Al Shiklah (to Oman)",
+        "notes": "Abu Dhabi side"
+      }
+    ],
+    "sea_ports": [
+      "Port Rashid",
+      "Jebel Ali"
+    ],
     "guidance": "Monitor airline status at DXB/AUH. If airports close, Oman land borders (Hatta, Al Ain) may remain open. Keep passport and travel documents accessible at all times. Maintain vehicle fuel above half tank."
   },
   "infrastructure": {
@@ -87,12 +149,47 @@
     "currency": "AED. Keep cash reserve (ATMs may go offline). USD widely accepted."
   },
   "threat_keywords_local": [
-    "dubai", "abu dhabi", "uae", "emirates", "sharjah", "ajman", "fujairah",
-    "ras al khaimah", "umm al quwain", "jebel ali", "ncema", "dewa",
-    "strait of hormuz", "persian gulf", "arabian gulf",
-    "al dhafra", "minhad", "saadiyat"
+    "dubai",
+    "abu dhabi",
+    "uae",
+    "emirates",
+    "sharjah",
+    "ajman",
+    "fujairah",
+    "ras al khaimah",
+    "umm al quwain",
+    "jebel ali",
+    "ncema",
+    "dewa",
+    "strait of hormuz",
+    "persian gulf",
+    "arabian gulf",
+    "al dhafra",
+    "minhad",
+    "saadiyat"
   ],
   "language": "en",
   "timezone": "Asia/Dubai",
-  "utc_offset": "+04:00"
+  "utc_offset": "+04:00",
+  "country": "United Arab Emirates",
+  "neighbors": [
+    "Iran",
+    "Iraq",
+    "Saudi Arabia",
+    "Qatar",
+    "Bahrain",
+    "Kuwait",
+    "Oman",
+    "Yemen"
+  ],
+  "regions_of_interest": [
+    "Israel",
+    "Lebanon",
+    "Syria",
+    "Jordan",
+    "Egypt",
+    "Strait of Hormuz",
+    "Persian Gulf",
+    "Gulf of Oman"
+  ]
 }

@@ -226,6 +226,17 @@
       "key_name": "newsapi"
     },
     {
+      "id": "world_monitor",
+      "name": "World Monitor",
+      "url": "https://world-monitor.com/api/signal-markers",
+      "type": "world_monitor",
+      "tier": 2,
+      "countries": ["global"],
+      "category": "osint_aggregator",
+      "parser": "world_monitor_api",
+      "description": "Real-time global conflict and incident monitoring — AI-synthesized geolocated situation summaries with timestamped key events. 168+ active locations."
+    },
+    {
       "id": "liveuamap_iran",
       "name": "LiveUAMap — Iran",
       "url": "https://iran.liveuamap.com/",
