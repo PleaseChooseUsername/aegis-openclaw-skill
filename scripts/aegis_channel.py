@@ -20,10 +20,37 @@ import json, os, sys, urllib.request, urllib.parse
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+
+def _load_openclaw_dotenv():
+    """Best-effort loader for ~/.openclaw/.env (KEY=VALUE, comments allowed).
+
+    This keeps tokens OUT of the repo and avoids hardcoding secrets in cron payloads.
+    """
+    env_path = Path(os.path.expanduser("~/.openclaw/.env"))
+    if not env_path.exists():
+        return {}
+    out = {}
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        k = k.strip()
+        v = v.strip().strip('"').strip("'")
+        if k and v and k not in os.environ:
+            out[k] = v
+    return out
+
+
 def load_env():
     """Load bot token and channel from aegis-config or environment."""
+    # Load from env first; if missing, best-effort load from ~/.openclaw/.env
     token = os.environ.get("AEGIS_BOT_TOKEN", "")
     channel = os.environ.get("AEGIS_CHANNEL_ID", "")
+    if not token or not channel:
+        dot = _load_openclaw_dotenv()
+        token = token or dot.get("AEGIS_BOT_TOKEN", "")
+        channel = channel or dot.get("AEGIS_CHANNEL_ID", "")
     
     config_paths = [
         os.path.expanduser("~/.openclaw/aegis-config.json"),
