@@ -110,8 +110,53 @@ def get_uae_context(locations):
     return uae_summaries, regional_summaries
 
 
+def _sanitize_for_prompt(text: str, max_len: int = 500) -> str:
+    """Strip likely prompt-injection / instruction text from untrusted sources.
+
+    This is not perfect, but it reduces risk by:
+    - removing code fences and angle-bracket tags
+    - dropping lines containing common injection phrases
+    - truncating to a bounded size
+    """
+    if not text:
+        return ""
+
+    t = text.replace("```", "").replace("<", "(").replace(">", ")")
+    lines = []
+    bad = (
+        "ignore previous",
+        "system prompt",
+        "developer message",
+        "you are chatgpt",
+        "act as",
+        "jailbreak",
+        "tool",
+        "function call",
+        "openclaw",
+        "anthropic",
+        "api key",
+        "token",
+    )
+    for ln in t.splitlines():
+        low = ln.strip().lower()
+        if not low:
+            continue
+        if any(b in low for b in bad):
+            continue
+        lines.append(ln.strip())
+
+    out = " ".join(lines)
+    if len(out) > max_len:
+        out = out[:max_len].rstrip() + "…"
+    return out
+
+
 def build_briefing_prompt(period, uae_context, regional_context, headlines):
-    """Build the prompt for the agent to synthesize a situation update."""
+    """Build the prompt for the agent to synthesize a situation update.
+
+    Security: inputs come from untrusted web sources. We sanitize and bound them
+    before embedding into the LLM prompt to reduce prompt-injection risk.
+    """
     
     now = datetime.now(timezone(timedelta(hours=4)))
     date_str = now.strftime("%A, %d %B %Y")
@@ -119,15 +164,21 @@ def build_briefing_prompt(period, uae_context, regional_context, headlines):
     
     uae_text = ""
     for ctx in uae_context[:5]:
-        uae_text += f"\n### {ctx['location']}\n{ctx['summary']}\n"
+        loc = _sanitize_for_prompt(str(ctx.get('location','')), 80)
+        summ = _sanitize_for_prompt(str(ctx.get('summary','')), 420)
+        uae_text += f"\n### {loc}\n{summ}\n"
         if ctx.get('analysis'):
-            uae_text += f"Analysis: {ctx['analysis']}\n"
+            uae_text += f"Analysis: {_sanitize_for_prompt(str(ctx['analysis']), 420)}\n"
     
     regional_text = ""
     for ctx in regional_context[:5]:
-        regional_text += f"\n### {ctx['location']}\n{ctx['summary']}\n"
+        loc = _sanitize_for_prompt(str(ctx.get('location','')), 80)
+        summ = _sanitize_for_prompt(str(ctx.get('summary','')), 320)
+        regional_text += f"\n### {loc}\n{summ}\n"
     
-    headlines_text = "\n".join(f"• {h[:200]}" for h in headlines[:20])
+    headlines_text = "\n".join(
+        f"• {_sanitize_for_prompt(str(h), 200)}" for h in (headlines[:20] if headlines else [])
+    )
     
     return f"""You are generating an AEGIS situation briefing for {date_str} at {time_str}.
 This is the {"morning" if period == "morning" else "evening"} update for civilians in Dubai, UAE.

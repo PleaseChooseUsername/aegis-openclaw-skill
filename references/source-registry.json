@@ -8,7 +8,9 @@
       "url": "https://www.gdacs.org/xml/rss.xml",
       "type": "rss",
       "tier": 0,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "emergency",
       "parser": "xml_rss",
       "description": "UN/EU global disaster alerts with CAP format"
@@ -19,7 +21,9 @@
       "url": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html/",
       "type": "web",
       "tier": 0,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "government",
       "parser": "html_scrape",
       "description": "US government travel advisories per country"
@@ -30,7 +34,9 @@
       "url_template": "https://www.gov.uk/foreign-travel-advice/{country_slug}",
       "type": "web",
       "tier": 0,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "government",
       "parser": "html_scrape",
       "description": "UK government foreign travel advice"
@@ -41,10 +47,12 @@
       "url": "https://www.ncema.gov.ae/en",
       "type": "web",
       "tier": 0,
-      "countries": ["AE"],
+      "countries": [
+        "AE"
+      ],
       "category": "emergency",
       "parser": "html_scrape",
-      "ssl_verify": false,
+      "ssl_verify": true,
       "description": "UAE National Emergency Crisis and Disaster Management Authority"
     },
     {
@@ -53,11 +61,13 @@
       "url": "https://www.modgov.ae/en",
       "type": "web",
       "tier": 0,
-      "countries": ["AE"],
+      "countries": [
+        "AE"
+      ],
       "category": "government",
       "parser": "html_scrape",
-      "ssl_verify": false,
-      "description": "UAE Ministry of Defence — official military statements and air defense updates"
+      "ssl_verify": true,
+      "description": "UAE Ministry of Defence \u2014 official military statements and air defense updates"
     },
     {
       "id": "uae_mofaic",
@@ -65,7 +75,9 @@
       "url": "https://www.mofaic.gov.ae/en",
       "type": "web",
       "tier": 0,
-      "countries": ["AE"],
+      "countries": [
+        "AE"
+      ],
       "category": "government",
       "parser": "html_scrape",
       "description": "UAE foreign affairs and security updates"
@@ -76,7 +88,9 @@
       "url": "https://ae.usembassy.gov/u-s-citizen-services/security-and-travel-information/",
       "type": "web",
       "tier": 0,
-      "countries": ["AE"],
+      "countries": [
+        "AE"
+      ],
       "category": "government",
       "parser": "html_scrape",
       "description": "US Embassy UAE security alerts"
@@ -87,7 +101,9 @@
       "url": "https://www.aljazeera.com/xml/rss/all.xml",
       "type": "rss",
       "tier": 1,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "news",
       "parser": "xml_rss",
       "description": "Al Jazeera breaking news and world coverage"
@@ -98,7 +114,14 @@
       "url": "https://www.aljazeera.com/tag/gulf/",
       "type": "web",
       "tier": 1,
-      "countries": ["AE", "BH", "KW", "OM", "QA", "SA"],
+      "countries": [
+        "AE",
+        "BH",
+        "KW",
+        "OM",
+        "QA",
+        "SA"
+      ],
       "category": "news",
       "parser": "html_scrape",
       "description": "Al Jazeera Gulf region coverage"
@@ -109,7 +132,22 @@
       "url": "https://www.reuters.com/world/middle-east/",
       "type": "web",
       "tier": 1,
-      "countries": ["AE", "BH", "IL", "IQ", "IR", "JO", "KW", "LB", "OM", "PS", "QA", "SA", "SY", "YE"],
+      "countries": [
+        "AE",
+        "BH",
+        "IL",
+        "IQ",
+        "IR",
+        "JO",
+        "KW",
+        "LB",
+        "OM",
+        "PS",
+        "QA",
+        "SA",
+        "SY",
+        "YE"
+      ],
       "category": "news",
       "parser": "html_scrape",
       "description": "Reuters Middle East news"
@@ -120,7 +158,9 @@
       "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
       "type": "rss",
       "tier": 1,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "news",
       "parser": "xml_rss",
       "description": "BBC World news feed"
@@ -131,7 +171,9 @@
       "url": "https://www.france24.com/en/rss",
       "type": "rss",
       "tier": 1,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "news",
       "parser": "xml_rss",
       "description": "France24 international news"
@@ -142,7 +184,9 @@
       "url": "https://www.thenationalnews.com/uae/",
       "type": "web",
       "tier": 1,
-      "countries": ["AE"],
+      "countries": [
+        "AE"
+      ],
       "category": "news",
       "parser": "html_scrape",
       "description": "UAE's leading English-language newspaper"
@@ -153,7 +197,14 @@
       "url": "https://www.thenationalnews.com/gulf-news/",
       "type": "web",
       "tier": 1,
-      "countries": ["AE", "BH", "KW", "OM", "QA", "SA"],
+      "countries": [
+        "AE",
+        "BH",
+        "KW",
+        "OM",
+        "QA",
+        "SA"
+      ],
       "category": "news",
       "parser": "html_scrape",
       "description": "Gulf-wide news coverage"
@@ -164,10 +215,17 @@
       "url": "https://gulfbusiness.com/feed/",
       "type": "rss",
       "tier": 1,
-      "countries": ["AE", "BH", "KW", "OM", "QA", "SA"],
+      "countries": [
+        "AE",
+        "BH",
+        "KW",
+        "OM",
+        "QA",
+        "SA"
+      ],
       "category": "news",
       "parser": "xml_rss",
-      "description": "Gulf Business — UAE and regional news feed"
+      "description": "Gulf Business \u2014 UAE and regional news feed"
     },
     {
       "id": "emirates247_rss",
@@ -175,10 +233,12 @@
       "url": "https://feeds.feedburner.com/emirates247",
       "type": "rss",
       "tier": 1,
-      "countries": ["AE"],
+      "countries": [
+        "AE"
+      ],
       "category": "news",
       "parser": "xml_rss",
-      "description": "Emirates 24/7 — UAE news feed"
+      "description": "Emirates 24/7 \u2014 UAE news feed"
     },
     {
       "id": "gulftoday_rss",
@@ -186,54 +246,77 @@
       "url": "https://www.gulftoday.ae/rss",
       "type": "rss",
       "tier": 1,
-      "countries": ["AE", "BH", "KW", "OM", "QA", "SA"],
+      "countries": [
+        "AE",
+        "BH",
+        "KW",
+        "OM",
+        "QA",
+        "SA"
+      ],
       "category": "news",
       "parser": "xml_rss",
-      "description": "Gulf Today — UAE and Gulf news"
+      "description": "Gulf Today \u2014 UAE and Gulf news"
     },
     {
       "id": "guardian_iran",
-      "name": "The Guardian — Iran",
+      "name": "The Guardian \u2014 Iran",
       "url": "https://www.theguardian.com/world/iran",
       "type": "web",
       "tier": 1,
-      "countries": ["IR", "AE", "IL"],
+      "countries": [
+        "IR",
+        "AE",
+        "IL"
+      ],
       "category": "news",
       "parser": "html_scrape",
       "description": "Guardian Iran and related conflict coverage"
     },
     {
       "id": "faa_notams_dxb",
-      "name": "FAA NOTAMs — Dubai (OMDB)",
+      "name": "FAA NOTAMs \u2014 Dubai (OMDB)",
       "url": "https://www.notams.faa.gov/dinsQueryWeb/queryRetrievalMapAction.do?reportType=Raw&retrieveLocId=OMDB",
       "type": "web",
       "tier": 2,
-      "countries": ["AE"],
+      "countries": [
+        "AE"
+      ],
       "category": "aviation",
       "parser": "html_scrape",
-      "description": "Dubai airport NOTAMs — closures, TFRs, restrictions"
+      "description": "Dubai airport NOTAMs \u2014 closures, TFRs, restrictions"
     },
     {
       "id": "faa_notams_auh",
-      "name": "FAA NOTAMs — Abu Dhabi (OMAA)",
+      "name": "FAA NOTAMs \u2014 Abu Dhabi (OMAA)",
       "url": "https://www.notams.faa.gov/dinsQueryWeb/queryRetrievalMapAction.do?reportType=Raw&retrieveLocId=OMAA",
       "type": "web",
       "tier": 2,
-      "countries": ["AE"],
+      "countries": [
+        "AE"
+      ],
       "category": "aviation",
       "parser": "html_scrape",
       "description": "Abu Dhabi airport NOTAMs"
     },
     {
       "id": "crisis_group_gulf",
-      "name": "International Crisis Group — Gulf",
+      "name": "International Crisis Group \u2014 Gulf",
       "url": "https://www.crisisgroup.org/middle-east-north-africa/gulf-and-arabian-peninsula",
       "type": "web",
       "tier": 3,
-      "countries": ["AE", "BH", "KW", "OM", "QA", "SA", "IR"],
+      "countries": [
+        "AE",
+        "BH",
+        "KW",
+        "OM",
+        "QA",
+        "SA",
+        "IR"
+      ],
       "category": "analysis",
       "parser": "html_scrape",
-      "description": "Expert conflict analysis — Gulf and Arabian Peninsula"
+      "description": "Expert conflict analysis \u2014 Gulf and Arabian Peninsula"
     },
     {
       "id": "war_on_rocks",
@@ -241,7 +324,9 @@
       "url": "https://warontherocks.com/",
       "type": "web",
       "tier": 3,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "analysis",
       "parser": "html_scrape",
       "description": "Military and security analysis"
@@ -252,10 +337,12 @@
       "url_template": "https://api.gdeltproject.org/api/v2/doc/doc?query={query}&mode=artlist&maxrecords=25&format=json",
       "type": "api",
       "tier": 3,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "aggregator",
       "parser": "json_api",
-      "description": "Global event database — no API key needed, query-based",
+      "description": "Global event database \u2014 no API key needed, query-based",
       "requires_key": false
     },
     {
@@ -264,10 +351,12 @@
       "url_template": "https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&language={lang}&apiKey={key}",
       "type": "api",
       "tier": 4,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "aggregator",
       "parser": "json_api",
-      "description": "News aggregator API — optional, 100 req/day free",
+      "description": "News aggregator API \u2014 optional, 100 req/day free",
       "requires_key": true,
       "key_name": "newsapi"
     },
@@ -277,43 +366,67 @@
       "url": "https://world-monitor.com/api/signal-markers",
       "type": "world_monitor",
       "tier": 2,
-      "countries": ["global"],
+      "countries": [
+        "global"
+      ],
       "category": "osint_aggregator",
       "parser": "world_monitor_api",
-      "description": "Real-time global conflict and incident monitoring — AI-synthesized geolocated situation summaries with timestamped key events. 168+ active locations."
+      "description": "Real-time global conflict and incident monitoring \u2014 AI-synthesized geolocated situation summaries with timestamped key events. 168+ active locations."
     },
     {
       "id": "liveuamap_iran",
-      "name": "LiveUAMap — Iran",
+      "name": "LiveUAMap \u2014 Iran",
       "url": "https://iran.liveuamap.com/",
       "type": "liveuamap",
       "tier": 2,
-      "countries": ["IR", "AE", "IQ", "KW", "BH", "SA", "QA", "OM", "global"],
+      "countries": [
+        "IR",
+        "AE",
+        "IQ",
+        "KW",
+        "BH",
+        "SA",
+        "QA",
+        "OM",
+        "global"
+      ],
       "category": "osint_map",
       "parser": "liveuamap_html",
-      "description": "Real-time crowdsourced conflict map — near-instant event reporting with geolocation. Events sourced from verified media, official statements, and field reporters."
+      "description": "Real-time crowdsourced conflict map \u2014 near-instant event reporting with geolocation. Events sourced from verified media, official statements, and field reporters."
     },
     {
       "id": "liveuamap_ukraine",
-      "name": "LiveUAMap — Ukraine",
+      "name": "LiveUAMap \u2014 Ukraine",
       "url": "https://liveuamap.com/",
       "type": "liveuamap",
       "tier": 2,
-      "countries": ["UA", "RU", "PL", "RO", "global"],
+      "countries": [
+        "UA",
+        "RU",
+        "PL",
+        "RO",
+        "global"
+      ],
       "category": "osint_map",
       "parser": "liveuamap_html",
-      "description": "Real-time Ukraine conflict map — events from frontlines, air alerts, infrastructure hits"
+      "description": "Real-time Ukraine conflict map \u2014 events from frontlines, air alerts, infrastructure hits"
     },
     {
       "id": "liveuamap_israel",
-      "name": "LiveUAMap — Israel",
+      "name": "LiveUAMap \u2014 Israel",
       "url": "https://israel.liveuamap.com/",
       "type": "liveuamap",
       "tier": 2,
-      "countries": ["IL", "LB", "PS", "SY", "global"],
+      "countries": [
+        "IL",
+        "LB",
+        "PS",
+        "SY",
+        "global"
+      ],
       "category": "osint_map",
       "parser": "liveuamap_html",
-      "description": "Real-time Israel/Palestine conflict map — rocket alerts, military operations, ground events"
+      "description": "Real-time Israel/Palestine conflict map \u2014 rocket alerts, military operations, ground events"
     }
   ]
 }

@@ -170,12 +170,18 @@ def fetch_rss(url, max_items=20):
         return []
 
 def fetch_web(url, max_chars=8000, ssl_verify=True):
-    """Fetch web page and extract text."""
+    """Fetch web page and extract text.
+
+    Security: TLS verification is ALWAYS enforced.
+    If a source requires disabling verification, it is skipped (risk: MITM injection).
+    """
     try:
         cmd = ["curl", "-sL", "--max-time", "15", "--compressed",
              "-H", "User-Agent: Mozilla/5.0 (compatible; AEGIS/1.0)"]
         if not ssl_verify:
-            cmd.append("--insecure")
+            # Never disable TLS verification.
+            # Return empty so the scanner continues safely.
+            return []
         cmd.append(url)
         result = subprocess.run(
             cmd,
