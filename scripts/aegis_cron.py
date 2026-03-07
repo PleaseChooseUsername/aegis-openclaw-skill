@@ -181,15 +181,14 @@ def main():
     token = os.environ.get("AEGIS_BOT_TOKEN", "")
     channel = os.environ.get("AEGIS_CHANNEL_ID", "")
     
-    # CRITICAL or HIGH: Post situation update to channel
-    if critical > 0 or high > 0:
-        level = "critical" if critical > 0 else "high"
-        icon = "🔴" if critical else "🟠"
-        print(f"[AEGIS] {icon} {critical} CRITICAL, {high} HIGH threats detected.", file=sys.stderr)
+    # CRITICAL ONLY: Post situation update to channel
+    # HIGH/MEDIUM are collected silently for morning/evening briefings
+    if critical > 0:
+        print(f"[AEGIS] 🔴 {critical} CRITICAL threats detected! Posting to channel.", file=sys.stderr)
         
         # Check cooldown to avoid spamming during sustained attacks
         if should_alert() and token and channel:
-            situation = build_situation_from_scan(scan_data, level)
+            situation = build_situation_from_scan(scan_data, "critical")
             subprocess.run(
                 [sys.executable, str(SCRIPTS_DIR / "aegis_channel.py"), "situation"],
                 input=json.dumps(situation),
@@ -201,13 +200,12 @@ def main():
         else:
             print(f"[AEGIS] Cooldown active or no credentials — skipping channel post.", file=sys.stderr)
         
-        # Always output for OpenClaw to deliver DM to user
-        significant = scan_data.get("threats", {}).get("critical", []) + scan_data.get("threats", {}).get("high", [])
+        # Also DM the user for critical
+        significant = scan_data.get("threats", {}).get("critical", [])
         titles = [t.get("title", "?")[:80] for t in significant[:3]]
-        dm_level = "🚨 CRITICAL" if critical else "⚠️ HIGH"
         print(json.dumps({
-            "alert": level,
-            "message": f"{dm_level}: {critical + high} threat(s) detected:\n" + "\n".join(f"• {t}" for t in titles),
+            "alert": "critical",
+            "message": f"🚨 CRITICAL: {critical} imminent threat(s):\n" + "\n".join(f"• {t}" for t in titles),
             "threats": significant[:5]
         }))
     elif force:

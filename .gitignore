@@ -7,3 +7,4 @@ pending_alerts.json
 scan_log.json
 *.skill
 .env
+__pycache__/

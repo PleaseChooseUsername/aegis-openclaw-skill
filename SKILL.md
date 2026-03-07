@@ -18,9 +18,14 @@ requires:
 
 # AEGIS — Automated Emergency Geopolitical Intelligence System
 
-Provides location-aware threat intelligence and safety alerts for civilians in conflict zones. Monitors 23+ sources (RSS, web scraping, JSON APIs) every 15 minutes. Official sources first, reputable media second. Anti-hoax verified. Multi-language (EN + AR keywords).
+Civilian-first threat intelligence for conflict zones. Monitors 30+ sources (RSS, web, APIs, OSINT aggregators) with two delivery modes:
 
-**Not a panic tool.** Realistic, honest, follows official government guidance.
+1. **CRITICAL-only scan** (every 15 min) — Only posts when lives are in immediate danger
+2. **Morning/evening briefings** (8am + 8pm local) — Agent-powered situation reports with actionable guidance
+
+Powered by **World Monitor** (real-time geopolitical intelligence API) and **LiveUAMap** (verified OSINT event feed), supplemented by government sources, major news agencies, and aviation data.
+
+**Not a panic tool.** Calm, factual, action-oriented. Follows official government guidance.
 
 ## Requirements
 
@@ -61,11 +66,18 @@ python3 scripts/aegis_scanner.py
 
 ### Set up cron monitoring
 ```
-openclaw cron add --expr "*/15 * * * *" --message "Run AEGIS scan: python3 <skill-dir>/scripts/aegis_scanner.py --cron"
-openclaw cron add --expr "0 3 * * *" --message "Generate AEGIS morning briefing: python3 <skill-dir>/scripts/aegis_briefing.py morning"
-openclaw cron add --expr "0 18 * * *" --message "Generate AEGIS evening briefing: python3 <skill-dir>/scripts/aegis_briefing.py evening"
+# CRITICAL-only scan (every 15 min) — posts ONLY for imminent threats
+openclaw cron add --every 15m --message "Run AEGIS scan: python3 <skill-dir>/scripts/aegis_cron.py"
+
+# Morning briefing (adjust time for user timezone — example: 4:00 UTC = 8:00 Dubai)
+openclaw cron add --cron "0 4 * * *" --tz UTC --message "Run AEGIS morning briefing: python3 <skill-dir>/scripts/aegis_briefing.py morning"
+
+# Evening briefing (example: 16:00 UTC = 20:00 Dubai)
+openclaw cron add --cron "0 16 * * *" --tz UTC --message "Run AEGIS evening briefing: python3 <skill-dir>/scripts/aegis_briefing.py evening"
+
+# Optional: Live feed (every 5 min) — for high-tempo situations only, disable during calm periods
+openclaw cron add --cron "*/5 * * * *" --message "Run AEGIS live feed: python3 <skill-dir>/scripts/aegis_feed.py" --disabled
 ```
-Adjust cron times to match user's timezone (times above are UTC examples).
 
 ### Optional: Telegram channel delivery
 Set environment variables for direct channel posting:
@@ -85,22 +97,25 @@ Or add to config:
 ## Data Storage
 
 AEGIS stores scan state in `~/.openclaw/aegis-data/` (or `$AEGIS_DATA_DIR` if set):
-- `seen_hashes.json` — SHA-256 dedup hashes (48h rolling window)
+- `seen_hashes.json` — content dedup hashes (48h rolling window for scans, 6h for feed)
 - `pending_alerts.json` — alerts awaiting batch delivery
 - `scan_log.json` — recent scan results
 - `last_scan.json` — most recent scan output (used by briefings)
+- `feed_state.json` — live feed dedup state and last post timestamp
+- `last_alert_time.json` — channel post cooldown tracker
+- `scan_history.log` — rolling log of scan results (last 500 entries)
 
 All files are local JSON. No data is sent to external servers beyond the listed sources in `source-registry.json`.
 
-## Sources (23+)
+## Sources (30+)
 
 All sources are defined in `references/source-registry.json`. The scanner **only** contacts URLs listed there.
 
 | Tier | Type | Count | Examples |
 |------|------|-------|----------|
-| 0 🏛️ | Government & Emergency | 6 | GDACS, NCEMA, US/UK embassies, MOFAIC |
-| 1 📰 | Major News Agencies | 8 | Al Jazeera, Reuters, BBC, France24, The National |
-| 2 🔍 | OSINT & Conflict Mapping | 4 | World Monitor API, LiveUAMap (3 regions) |
+| 0 🏛️ | Government & Emergency | 7 | GDACS, NCEMA, UAE MoD, US/UK embassies, MOFAIC |
+| 1 📰 | Major News & RSS | 11 | Al Jazeera, Reuters, BBC, Gulf Business, Emirates 24/7, Gulf Today |
+| 2 🔍 | OSINT & Conflict Mapping | 5 | World Monitor API, LiveUAMap (3 regions + feed) |
 | 2 ✈️ | Aviation | 2 | FAA NOTAMs (DXB, AUH) |
 | 3 📋 | Analysis | 2 | Crisis Group, War on the Rocks |
 | 4 🔑 | API-Enhanced (optional) | 1+ | NewsAPI (free tier), GDELT |
@@ -133,11 +148,29 @@ CRITICAL is reserved for "act now, your life may be in danger." Regional develop
 
 ## Briefings
 
-Morning and evening briefings include:
-- Threat level with trend indicator
-- Key developments since last briefing
-- Source attribution and verification status
-- Standing preparedness guidance
+Morning and evening briefings use agent-powered synthesis to create human-readable situation updates:
+
+### Situation Update Format
+Each briefing includes:
+- **Summary** — What happened in plain English with real numbers
+- **Status** — Current safety status (threat level with description)
+- **Actions** — 4-6 concrete things a civilian should do right now
+- **Daily Impact** — Flights, schools, work, supplies, roads, hospitals
+- **Outlook** — What to expect in the next 12-24 hours
+- **Sources** — Where to verify and get more info
+
+### Delivery Modes
+| Mode | Frequency | Posts on |
+|------|-----------|---------|
+| **CRITICAL scan** | Every 15 min | Imminent danger only (missiles inbound, shelter orders) |
+| **Morning briefing** | Once daily (8am local) | Full situation update with overnight summary |
+| **Evening briefing** | Once daily (8pm local) | Full situation update with daytime summary |
+| **Live feed** | Every 5 min (optional) | Discrete verified events from LiveUAMap + World Monitor |
+
+### Anti-Spam
+- CRITICAL scan: 60-minute cooldown between channel posts
+- Live feed: 5-minute batch interval, max 8 events per post
+- Briefings: Agent-powered, pin to channel, once per cycle
 
 ## Country Profiles
 
