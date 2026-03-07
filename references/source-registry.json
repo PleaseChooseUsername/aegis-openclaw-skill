@@ -44,7 +44,20 @@
       "countries": ["AE"],
       "category": "emergency",
       "parser": "html_scrape",
+      "ssl_verify": false,
       "description": "UAE National Emergency Crisis and Disaster Management Authority"
+    },
+    {
+      "id": "uae_modgov",
+      "name": "UAE Ministry of Defence",
+      "url": "https://www.modgov.ae/en",
+      "type": "web",
+      "tier": 0,
+      "countries": ["AE"],
+      "category": "government",
+      "parser": "html_scrape",
+      "ssl_verify": false,
+      "description": "UAE Ministry of Defence — official military statements and air defense updates"
     },
     {
       "id": "uae_mofaic",
@@ -144,6 +157,39 @@
       "category": "news",
       "parser": "html_scrape",
       "description": "Gulf-wide news coverage"
+    },
+    {
+      "id": "gulfbusiness_rss",
+      "name": "Gulf Business",
+      "url": "https://gulfbusiness.com/feed/",
+      "type": "rss",
+      "tier": 1,
+      "countries": ["AE", "BH", "KW", "OM", "QA", "SA"],
+      "category": "news",
+      "parser": "xml_rss",
+      "description": "Gulf Business — UAE and regional news feed"
+    },
+    {
+      "id": "emirates247_rss",
+      "name": "Emirates 24/7",
+      "url": "https://feeds.feedburner.com/emirates247",
+      "type": "rss",
+      "tier": 1,
+      "countries": ["AE"],
+      "category": "news",
+      "parser": "xml_rss",
+      "description": "Emirates 24/7 — UAE news feed"
+    },
+    {
+      "id": "gulftoday_rss",
+      "name": "Gulf Today",
+      "url": "https://www.gulftoday.ae/rss",
+      "type": "rss",
+      "tier": 1,
+      "countries": ["AE", "BH", "KW", "OM", "QA", "SA"],
+      "category": "news",
+      "parser": "xml_rss",
+      "description": "Gulf Today — UAE and Gulf news"
     },
     {
       "id": "guardian_iran",

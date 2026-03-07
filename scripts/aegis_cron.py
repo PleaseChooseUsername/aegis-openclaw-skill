@@ -1,24 +1,135 @@
 #!/usr/bin/env python3
 """
-AEGIS Cron Runner — Silent 15-min scan that only alerts on CRITICAL.
-Saves scan results for briefings to use. Posts nothing unless lives are at risk.
+AEGIS Cron Runner — 15-min scan cycle.
+Posts human-readable situation updates on CRITICAL/HIGH threats.
+Silent when nothing new. Saves scan results for briefings.
 
 Usage:
   python3 aegis_cron.py          # Normal silent scan
   python3 aegis_cron.py --force  # Force output even if no threats
 
 Environment:
-  AEGIS_BOT_TOKEN    — Telegram bot token (for critical alerts)
+  AEGIS_BOT_TOKEN    — Telegram bot token (for channel alerts)
   AEGIS_CHANNEL_ID   — Telegram channel ID
 """
 
-import json, os, sys, subprocess
+import json, os, sys, subprocess, time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = SKILL_DIR / "scripts"
 DATA_DIR = Path(os.environ.get("AEGIS_DATA_DIR", os.path.expanduser("~/.openclaw/aegis-data")))
+ALERT_COOLDOWN_FILE = DATA_DIR / "last_alert_time.json"
+
+# Minimum minutes between channel posts (avoid spam during sustained attacks)
+ALERT_COOLDOWN_MINUTES = 60
+
+
+def should_alert():
+    """Check if we're past the cooldown period since last alert."""
+    try:
+        if ALERT_COOLDOWN_FILE.exists():
+            data = json.loads(ALERT_COOLDOWN_FILE.read_text())
+            last_time = data.get("last_alert_ts", 0)
+            elapsed_min = (time.time() - last_time) / 60
+            return elapsed_min >= ALERT_COOLDOWN_MINUTES
+    except:
+        pass
+    return True
+
+
+def mark_alerted():
+    """Record that we just sent an alert."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    ALERT_COOLDOWN_FILE.write_text(json.dumps({"last_alert_ts": time.time()}))
+
+
+def build_situation_from_scan(scan_data, level):
+    """Build a human-readable situation dict from raw scan data.
+    
+    This is template-based for speed. The morning/evening briefings
+    use the full agent-powered synthesis for richer content.
+    """
+    threats = scan_data.get("threats", {})
+    critical_threats = threats.get("critical", [])
+    high_threats = threats.get("high", [])
+    all_significant = critical_threats + high_threats
+    
+    # Extract key info from threat titles
+    titles = [t.get("title", "")[:150] for t in all_significant[:10]]
+    title_text = "; ".join(t for t in titles if t)
+    
+    # Determine what kind of threats we're seeing
+    has_missile = any("missile" in t.lower() or "ballistic" in t.lower() for t in titles)
+    has_drone = any("drone" in t.lower() for t in titles)
+    has_airport = any("airport" in t.lower() or "airspace" in t.lower() or "flight" in t.lower() for t in titles)
+    has_intercept = any("intercept" in t.lower() or "air defen" in t.lower() for t in titles)
+    has_strait = any("hormuz" in t.lower() or "strait" in t.lower() for t in titles)
+    
+    # Build summary
+    projectile_types = []
+    if has_missile:
+        projectile_types.append("ballistic missiles")
+    if has_drone:
+        projectile_types.append("drones")
+    projectile_str = " and ".join(projectile_types) if projectile_types else "projectiles"
+    
+    if level == "critical":
+        if has_intercept:
+            summary = f"UAE air defenses are actively intercepting incoming {projectile_str}. This is a live situation — take cover if you hear sirens or receive phone alerts."
+        elif has_airport:
+            summary = f"Dubai/Abu Dhabi airports reporting disruptions. Airspace may be restricted due to active air defense operations."
+        else:
+            summary = f"Critical security event detected. Multiple sources reporting active threats against UAE. Follow NCEMA guidance immediately."
+        
+        status = "Active threat. Air defense systems engaged. Stay indoors, away from windows."
+        actions = [
+            "If you hear sirens or explosions: move to interior room immediately, away from windows",
+            "Do NOT go outside to watch or film",
+            "Keep phone charged, emergency alerts ON",
+            "Stay away from windows, glass facades, and exterior walls",
+            "If driving: pull over safely and get inside nearest building",
+            "Check on neighbors, especially elderly and those living alone",
+        ]
+    else:
+        # HIGH
+        if has_intercept:
+            summary = f"New reports of {projectile_str} targeting UAE territory. Air defenses responding. No immediate action required but stay alert."
+        elif has_strait:
+            summary = f"Tensions at Strait of Hormuz — potential impact on shipping, fuel, and regional stability."
+        else:
+            summary = f"Elevated security situation. Regional military activity detected that could affect UAE."
+        
+        status = "Air defenses on high alert. Situation being monitored. No immediate danger reported."
+        actions = [
+            "Keep phone charged and emergency alerts ON",
+            "Know your nearest shelter (parking garage, basement, interior room)",
+            "Have a go-bag ready: water, docs, phone charger, medications, cash",
+            "Check on flight status if traveling today",
+            "Follow @ABORWAIS (NCEMA) and @modgovae for official updates",
+        ]
+    
+    # Daily impact (template — updated in morning/evening briefings with real data)
+    impact = {}
+    if has_airport:
+        impact["Flights"] = "Check airline status before travel. Expect possible diversions and delays."
+    if has_missile or has_drone:
+        impact["General"] = "Stay alert. Most daily life continues but be prepared to shelter at any moment."
+    if has_strait:
+        impact["Fuel & shipping"] = "Possible disruptions to fuel supply and shipping routes. No immediate shortages expected."
+    
+    return {
+        "location": "Dubai, UAE",
+        "threat_level": level,
+        "summary": summary,
+        "status": status,
+        "actions": actions,
+        "daily_impact": impact if impact else {"General": "Daily life continues with heightened caution. Follow official channels."},
+        "outlook": "Situation ongoing and fluid. Monitor AEGIS and official channels for updates.",
+        "sources": [t.get("source_name", "OSINT") for t in all_significant[:5]]
+    }
+
 
 def main():
     force = "--force" in sys.argv
@@ -67,35 +178,45 @@ def main():
     except:
         pass
     
-    # CRITICAL: Post immediately to channel
-    if critical > 0:
-        print(f"[AEGIS] 🔴 {critical} CRITICAL threats detected! Posting to channel.", file=sys.stderr)
+    token = os.environ.get("AEGIS_BOT_TOKEN", "")
+    channel = os.environ.get("AEGIS_CHANNEL_ID", "")
+    
+    # CRITICAL or HIGH: Post situation update to channel
+    if critical > 0 or high > 0:
+        level = "critical" if critical > 0 else "high"
+        icon = "🔴" if critical else "🟠"
+        print(f"[AEGIS] {icon} {critical} CRITICAL, {high} HIGH threats detected.", file=sys.stderr)
         
-        token = os.environ.get("AEGIS_BOT_TOKEN", "")
-        channel = os.environ.get("AEGIS_CHANNEL_ID", "")
-        
-        if token and channel:
+        # Check cooldown to avoid spamming during sustained attacks
+        if should_alert() and token and channel:
+            situation = build_situation_from_scan(scan_data, level)
             subprocess.run(
-                [sys.executable, str(SCRIPTS_DIR / "aegis_channel.py"), "critical"],
-                input=json.dumps(scan_data),
+                [sys.executable, str(SCRIPTS_DIR / "aegis_channel.py"), "situation"],
+                input=json.dumps(situation),
                 text=True, timeout=30,
                 env={**os.environ, "AEGIS_BOT_TOKEN": token, "AEGIS_CHANNEL_ID": channel}
             )
+            mark_alerted()
+            print(f"[AEGIS] Situation update posted to channel.", file=sys.stderr)
+        else:
+            print(f"[AEGIS] Cooldown active or no credentials — skipping channel post.", file=sys.stderr)
         
-        # Also output for OpenClaw to deliver to user DM
+        # Always output for OpenClaw to deliver DM to user
+        significant = scan_data.get("threats", {}).get("critical", []) + scan_data.get("threats", {}).get("high", [])
+        titles = [t.get("title", "?")[:80] for t in significant[:3]]
+        dm_level = "🚨 CRITICAL" if critical else "⚠️ HIGH"
         print(json.dumps({
-            "alert": "critical",
-            "message": f"🚨 AEGIS CRITICAL: {critical} critical threat(s) detected. Check AEGIS channel.",
-            "threats": scan_data.get("threats", {}).get("critical", [])
+            "alert": level,
+            "message": f"{dm_level}: {critical + high} threat(s) detected:\n" + "\n".join(f"• {t}" for t in titles),
+            "threats": significant[:5]
         }))
     elif force:
         print(json.dumps({"status": "ok", "counts": counts}))
     else:
-        # Silent — no output means no channel spam
-        # Just print to stderr for logs
+        # Silent — nothing to report
         print(f"[AEGIS] {log_line}", file=sys.stderr)
-        # Return HEARTBEAT_OK equivalent so OpenClaw doesn't announce
         print("HEARTBEAT_OK")
+
 
 if __name__ == "__main__":
     main()

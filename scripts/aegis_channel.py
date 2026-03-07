@@ -120,6 +120,149 @@ def format_critical_alert(scan_data):
     return "\n".join(lines)
 
 
+def format_high_alert(scan_data):
+    """Format a HIGH-level alert. Professional, factual, no personal info."""
+    threats = scan_data.get("threats", {}).get("high", [])
+    if not threats:
+        return None
+    
+    now = datetime.now(timezone(timedelta(hours=4)))
+    
+    lines = []
+    lines.append("⚠️ ELEVATED THREAT ALERT")
+    lines.append(f"{now.strftime('%d %b %Y — %H:%M')} GST")
+    lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    for t in threats[:5]:
+        title = t.get("title", "Unknown threat")
+        source = t.get("source_name", "Unknown")
+        tier = t.get("source_tier", "?")
+        
+        lines.append("")
+        lines.append(f"🟠 {title}")
+        lines.append(f"   Source: {source} (Tier {tier})")
+    
+    if len(threats) > 5:
+        lines.append(f"\n   + {len(threats) - 5} additional items tracked")
+    
+    lines.append("")
+    lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    lines.append("Monitor official channels for updates")
+    lines.append("")
+    lines.append("AEGIS | Automated Emergency Intelligence")
+    
+    return "\n".join(lines)
+
+
+def format_situation_update(situation):
+    """Format a human-readable situation update.
+    
+    This is the primary civilian format. Written for a person in the affected area
+    who needs to understand: What happened? Am I safe? What should I do?
+    
+    No military jargon, no source tiers, no pattern matches.
+    Written like a knowledgeable friend who happens to have all the intel.
+    
+    Input: dict with keys:
+        summary       - 1-3 sentence plain English summary of what's happening
+        status        - current safety status (e.g. "Air defenses active, situation ongoing")
+        threat_level  - "critical" | "high" | "elevated" | "guarded" | "low"
+        actions       - list of concrete action items for civilians
+        daily_impact  - dict with keys like flights, schools, work, supplies, roads
+        outlook       - 1-2 sentence near-term outlook
+        sources       - list of source URLs for "read more"
+        timestamp     - ISO timestamp or will use now
+        location      - e.g. "Dubai, UAE"
+    """
+    now = datetime.now(timezone(timedelta(hours=4)))
+    ts = now.strftime("%d %b %Y — %H:%M GST")
+    location = situation.get("location", "UAE")
+    
+    # Threat level header
+    level = situation.get("threat_level", "high").lower()
+    level_display = {
+        "critical": "🔴 CRITICAL — Active threat to life",
+        "high":     "🟠 HIGH — Significant ongoing threat",
+        "elevated": "🟡 ELEVATED — Heightened risk, stay alert",
+        "guarded":  "🔵 GUARDED — General risk, monitor updates",
+        "low":      "🟢 LOW — No immediate threat",
+    }.get(level, "⚪ UNKNOWN")
+    
+    lines = []
+    
+    # === HEADER ===
+    lines.append(f"📍 SITUATION UPDATE — {location}")
+    lines.append(ts)
+    lines.append(f"Status: {level_display}")
+    lines.append("")
+    
+    # === WHAT'S HAPPENING ===
+    summary = situation.get("summary", "")
+    if summary:
+        lines.append(summary)
+        lines.append("")
+    
+    # === CURRENT STATUS ===
+    status = situation.get("status", "")
+    if status:
+        lines.append(f"🛡️ {status}")
+        lines.append("")
+    
+    # === WHAT TO DO ===
+    actions = situation.get("actions", [])
+    if actions:
+        lines.append("📋 What you should do:")
+        for a in actions:
+            lines.append(f"  → {a}")
+        lines.append("")
+    
+    # === DAILY LIFE IMPACT ===
+    impact = situation.get("daily_impact", {})
+    if impact:
+        lines.append("🏙️ How this affects daily life:")
+        for area, status_text in impact.items():
+            icon = {
+                "flights": "✈️",
+                "airports": "✈️",
+                "schools": "🏫",
+                "work": "💼",
+                "supplies": "🛒",
+                "roads": "🚗",
+                "metro": "🚇",
+                "hospitals": "🏥",
+                "water": "💧",
+                "power": "⚡",
+                "internet": "📶",
+                "banks": "🏦",
+            }.get(area.lower(), "•")
+            lines.append(f"  {icon} {area}: {status_text}")
+        lines.append("")
+    
+    # === OUTLOOK ===
+    outlook = situation.get("outlook", "")
+    if outlook:
+        lines.append(f"🔮 Near-term: {outlook}")
+        lines.append("")
+    
+    # === SOURCES ===
+    sources = situation.get("sources", [])
+    if sources:
+        lines.append("📰 Sources:")
+        for s in sources[:5]:
+            if isinstance(s, dict):
+                lines.append(f"  • {s.get('name', '')} — {s.get('url', '')}")
+            else:
+                lines.append(f"  • {s}")
+        lines.append("")
+    
+    # === FOOTER ===
+    lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    lines.append("📞 Emergency: 999 | NCEMA: 800-22-444")
+    lines.append("AEGIS — Open Source Emergency Intelligence")
+    
+    return "\n".join(lines)
+
+
 def format_briefing(briefing_data, scan_data=None):
     """Format morning/evening briefing. Professional, cold, no personal info."""
     btype = briefing_data.get("type", "status")
@@ -225,7 +368,7 @@ def format_briefing(briefing_data, scan_data=None):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: aegis_channel.py <critical|briefing|status> [json_file]", file=sys.stderr)
+        print("Usage: aegis_channel.py <critical|high|situation|briefing|status> [json_file]", file=sys.stderr)
         sys.exit(1)
     
     action = sys.argv[1]
@@ -248,6 +391,34 @@ def main():
             print(json.dumps(result, indent=2))
         else:
             print("[AEGIS] No critical threats to post", file=sys.stderr)
+    
+    elif action == "high":
+        if len(sys.argv) < 3:
+            data = json.load(sys.stdin)
+        else:
+            with open(sys.argv[2]) as f:
+                data = json.load(f)
+        
+        msg = format_high_alert(data)
+        if msg:
+            result = send_telegram(token, channel, msg)
+            print(json.dumps(result, indent=2))
+        else:
+            print("[AEGIS] No high threats to post", file=sys.stderr)
+    
+    elif action == "situation":
+        if len(sys.argv) < 3:
+            data = json.load(sys.stdin)
+        else:
+            with open(sys.argv[2]) as f:
+                data = json.load(f)
+        
+        msg = format_situation_update(data)
+        if msg:
+            result = send_telegram(token, channel, msg, pin=True)
+            print(json.dumps(result, indent=2))
+        else:
+            print("[AEGIS] Empty situation data", file=sys.stderr)
     
     elif action == "briefing":
         if len(sys.argv) < 3:

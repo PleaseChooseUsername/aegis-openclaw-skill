@@ -17,7 +17,13 @@
         "chemical.*(attack|release|weapon.used).*(gulf|uae|dubai|abu.dhabi)",
         "(mass.casualt|civilian.casualt).*(dubai|abu.dhabi|uae|emirates)",
         "(dubai|abu.dhabi|uae|emirates).*(mass.casualt|civilian.casualt|killed|dead.reported)",
-        "uae.*(intercept.fail|defense.fail|breach|penetrat)"
+        "uae.*(intercept.fail|defense.fail|breach|penetrat)",
+        "uae.*(intercept|air.defen|shoot.down|thaad|patriot).*(ballistic|missile|cruise)",
+        "(ballistic|cruise).*(missile).*(intercept|hit|target|strike|fire|launch).*(uae|dubai|abu.dhabi|emirates)",
+        "uae.*(intercept).*(\\d+).*(missile|drone|rocket|projectile)",
+        "(iran|iranian).*(attack|strike|fire|launch|target).*(uae|dubai|abu.dhabi|emirates)",
+        "(uae|dubai|abu.dhabi|emirates).*(phone.alert|emergency.alert|push.alert|civil.alert|warning.alert)",
+        "(ministry.of.defen|modgov|mod.gov).*(uae|emirates).*(statement|intercept|defense|attack)"
       ],
       "ar": [
         "صاروخ.*(دبي|أبو.ظبي|الإمارات|الشارقة)",
