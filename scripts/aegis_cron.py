@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 AEGIS Cron Runner — 15-min scan cycle.
-Posts human-readable situation updates on CRITICAL/HIGH threats.
+Posts to the public channel ONLY for CRITICAL (imminent, life-safety) threats.
+HIGH/MEDIUM are collected for morning/evening briefings.
 Silent when nothing new. Saves scan results for briefings.
 
 Usage:
@@ -188,15 +189,15 @@ def main():
         
         # Check cooldown to avoid spamming during sustained attacks
         if should_alert() and token and channel:
-            situation = build_situation_from_scan(scan_data, "critical")
+            # Post a cold, factual CRITICAL ALERT to the public channel
             subprocess.run(
-                [sys.executable, str(SCRIPTS_DIR / "aegis_channel.py"), "situation"],
-                input=json.dumps(situation),
+                [sys.executable, str(SCRIPTS_DIR / "aegis_channel.py"), "critical"],
+                input=json.dumps(scan_data),
                 text=True, timeout=30,
                 env={**os.environ, "AEGIS_BOT_TOKEN": token, "AEGIS_CHANNEL_ID": channel}
             )
             mark_alerted()
-            print(f"[AEGIS] Situation update posted to channel.", file=sys.stderr)
+            print(f"[AEGIS] Critical alert posted to channel.", file=sys.stderr)
         else:
             print(f"[AEGIS] Cooldown active or no credentials — skipping channel post.", file=sys.stderr)
         
