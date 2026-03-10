@@ -93,11 +93,36 @@ def interactive_setup():
     print("\n⏱️  MONITORING")
     interval = input("  Scan interval (minutes) [15]: ").strip() or "15"
     
+    print("\n🧠 LLM VERIFICATION (optional — improves CRITICAL alert accuracy)")
+    print("  AEGIS can use an LLM to verify CRITICAL alerts and reduce false positives.")
+    print("  Without LLM: regex + negative pattern filtering (good, but less precise)")
+    print("  With LLM: adds semantic verification (best accuracy)")
+    print()
+    print("  Options:")
+    print("    1. ollama  — Local Ollama instance (free, private, recommended)")
+    print("    2. openai  — Any OpenAI-compatible API (OpenRouter, Together, vLLM, etc.)")
+    print("    3. none    — No LLM, regex-only mode (works fine, slightly more false positives)")
+    llm_choice = input("  LLM provider [1/2/3, default=3 (none)]: ").strip() or "3"
+
+    llm_config = {"enabled": False, "provider": "none"}
+    if llm_choice == "1":
+        llm_endpoint = input("  Ollama endpoint [http://localhost:11434]: ").strip() or "http://localhost:11434"
+        llm_model = input("  Ollama model [qwen3:8b]: ").strip() or "qwen3:8b"
+        llm_config = {"enabled": True, "provider": "ollama", "endpoint": llm_endpoint, "model": llm_model}
+    elif llm_choice == "2":
+        llm_endpoint = input("  API base URL (e.g. https://openrouter.ai/api): ").strip()
+        llm_model = input("  Model name (e.g. meta-llama/llama-3-8b-instruct): ").strip()
+        llm_key = input("  API key: ").strip()
+        if llm_endpoint and llm_model:
+            llm_config = {"enabled": True, "provider": "openai", "endpoint": llm_endpoint, "model": llm_model, "api_key": llm_key}
+        else:
+            print("  ⚠️  Missing endpoint or model — LLM disabled.")
+
     print("\n🔑 API KEYS (optional — press Enter to skip)")
     newsapi_key = input("  NewsAPI.org key (free at newsapi.org/register): ").strip() or None
-    
+
     config = {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "location": {
             "country": country,
             "country_name": country_name,
@@ -115,9 +140,10 @@ def interactive_setup():
             "evening": evening
         },
         "scan_interval_minutes": int(interval),
+        "llm": llm_config,
         "api_keys": {}
     }
-    
+
     if newsapi_key:
         config["api_keys"]["newsapi"] = newsapi_key
     

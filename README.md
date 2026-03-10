@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenClaw Skill](https://img.shields.io/badge/OpenClaw-Skill-blue.svg)](https://openclaw.ai)
-[![ClawHub](https://img.shields.io/badge/ClawHub-aegis@3.0.0-orange.svg)](https://clawhub.com)
+[![ClawHub](https://img.shields.io/badge/ClawHub-aegis@3.2.0-orange.svg)](https://clawhub.com)
 
 </div>
 
@@ -39,6 +39,7 @@ AEGIS is an open-source [OpenClaw](https://openclaw.ai) skill that monitors 30+ 
 - **Anti-hoax** — Multi-source verification. Social media excluded. Tier system for trust.
 - **Zero API keys** — All 30+ sources are free (RSS, web scraping, public APIs)
 - **Zero dependencies** — Python 3 stdlib only. No pip installs needed.
+- **Optional LLM** — Add local Ollama or any OpenAI-compatible API for smarter CRITICAL filtering. Works fine without it.
 
 ## Quick Start
 
@@ -150,6 +151,30 @@ Sources (30+) → Scanner → Classification → Dedup
                               Briefing cron → Agent synthesis → Channel (pinned)
 ```
 
+## LLM Verification (Optional)
+
+AEGIS v3.2 adds optional LLM-based CRITICAL alert verification. This catches false positives that regex alone misses (e.g., "cricket cancelled due to war" triggering CRITICAL).
+
+| Mode | Config | Cost | Notes |
+|------|--------|------|-------|
+| **Local Ollama** | `"provider": "ollama"` | Free | Needs GPU. Best option if available. |
+| **OpenAI-compatible** | `"provider": "openai"` | ~$0.001/check | Works with OpenRouter, Together, vLLM, LiteLLM, etc. |
+| **No LLM** | `"provider": "none"` | Free | Default. Regex + negative patterns only. Slightly more false positives. |
+
+Add to `aegis-config.json`:
+```json
+{
+  "llm": {
+    "enabled": true,
+    "provider": "ollama",
+    "endpoint": "http://localhost:11434",
+    "model": "qwen3:8b"
+  }
+}
+```
+
+**Without LLM, AEGIS still works well.** The regex + negative pattern filter handles most cases. LLM just adds an extra layer of accuracy for CRITICAL alerts.
+
 ## Anti-Hoax Protocol
 
 - **Tier 0-1** sources can trigger alerts directly
@@ -176,11 +201,14 @@ Currently supported: **UAE** (`uae.json`)
 
 ## Cost
 
-| Setup | Cost |
-|-------|------|
-| Sources | **Free** (30+ RSS, web, public APIs) |
-| LLM (Copilot) | **Free** with GitHub Copilot subscription |
-| LLM (commercial) | ~$0.03-0.05/day |
+| Component | Cost |
+|-----------|------|
+| Sources (30+) | **Free** (RSS, web, public APIs) |
+| LLM verification (Ollama) | **Free** (local GPU) |
+| LLM verification (OpenRouter) | ~$0.001/check (~$0.10/day at 96 scans) |
+| LLM verification (none) | **Free** (regex-only, no LLM needed) |
+| OpenClaw briefings (Copilot) | **Free** with GitHub Copilot |
+| OpenClaw briefings (commercial) | ~$0.03-0.05/day |
 | Optional NewsAPI | Free tier (100 req/day) |
 
 ## License

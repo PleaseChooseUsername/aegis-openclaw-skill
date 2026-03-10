@@ -447,46 +447,180 @@ def fetch_source(source, config):
 
 # ------- Threat Classification -------
 
+def _check_negative_patterns(text, keywords):
+    """Check if text matches any negative (disqualifying) patterns for CRITICAL."""
+    neg_patterns = keywords.get("critical", {}).get("negative_patterns", [])
+    for pattern in neg_patterns:
+        try:
+            if re.search(pattern, text, re.IGNORECASE):
+                return True, pattern
+        except re.error:
+            continue
+    return False, None
+
+
+def _load_llm_config(config):
+    """Load LLM verification settings from AEGIS config.
+
+    Returns dict with keys: enabled, provider, endpoint, model, api_key, timeout.
+    Defaults to Ollama at localhost:11434 if no config specified.
+    """
+    llm = config.get("llm", {})
+    enabled = llm.get("enabled", True)  # Default: enabled (fail-open if unavailable)
+    provider = llm.get("provider", "ollama")  # ollama | openai | none
+    if provider == "none":
+        enabled = False
+
+    return {
+        "enabled": enabled,
+        "provider": provider,
+        "endpoint": llm.get("endpoint", "http://localhost:11434"),
+        "model": llm.get("model", "qwen3:8b"),
+        "api_key": llm.get("api_key", ""),
+        "timeout": llm.get("timeout", 30),
+    }
+
+
+def _llm_verify_critical(item, config, timeout=30):
+    """Use LLM to verify CRITICAL classification.
+
+    Supports three modes (configured in aegis-config.json under "llm"):
+    - ollama: Local Ollama instance (default, zero cost)
+    - openai: Any OpenAI-compatible API (OpenRouter, Together, local vLLM, etc.)
+    - none/disabled: Skip LLM verification, rely on regex + negative patterns only
+
+    Returns True only if LLM confirms this is an ACTIVE, ONGOING emergency.
+    Returns True on LLM failure (fail-open for safety — better a false positive than missing real danger).
+    """
+    llm_cfg = _load_llm_config(config)
+    if not llm_cfg["enabled"]:
+        print(f"  [LLM] Disabled — skipping verification (regex-only mode)", file=sys.stderr)
+        return True  # No LLM = fail open
+
+    title = item.get("title", "")
+    desc = item.get("description", "")[:300]
+    source = item.get("source_name", "unknown")
+    country = config.get("location", {}).get("country_name", "the affected area")
+    timeout = llm_cfg["timeout"]
+
+    user_msg = f"""Is this news item about an ACTIVE, ONGOING military emergency or attack that poses IMMEDIATE physical danger to civilians in {country} RIGHT NOW?
+
+Title: {title}
+Description: {desc}
+Source: {source}
+
+Rules:
+- YES = breaking news about an active attack, missiles, sirens, shelter orders happening NOW in {country}
+- NO = past events, analysis, sports cancellations, economics, speculation, events in other countries, opinion pieces
+
+Start your answer with YES or NO."""
+
+    try:
+        import subprocess as sp
+
+        if llm_cfg["provider"] == "ollama":
+            # Ollama native chat API
+            payload = json.dumps({
+                "model": llm_cfg["model"],
+                "messages": [{"role": "user", "content": f"/no_think\n{user_msg}"}],
+                "stream": False,
+                "options": {"temperature": 0.0, "num_predict": 500}
+            })
+            cmd = [
+                "curl", "-s", "--max-time", str(timeout),
+                f"{llm_cfg['endpoint']}/api/chat",
+                "-d", payload
+            ]
+            result = sp.run(cmd, capture_output=True, text=True, timeout=timeout + 5)
+            if result.returncode == 0 and result.stdout:
+                data = json.loads(result.stdout)
+                response = data.get("message", {}).get("content", "").strip()
+        elif llm_cfg["provider"] == "openai":
+            # OpenAI-compatible chat completions API
+            payload = json.dumps({
+                "model": llm_cfg["model"],
+                "messages": [{"role": "user", "content": user_msg}],
+                "max_tokens": 50,
+                "temperature": 0.0
+            })
+            headers = ["-H", "Content-Type: application/json"]
+            if llm_cfg["api_key"]:
+                headers += ["-H", f"Authorization: Bearer {llm_cfg['api_key']}"]
+            cmd = [
+                "curl", "-s", "--max-time", str(timeout),
+                f"{llm_cfg['endpoint']}/v1/chat/completions",
+                *headers, "-d", payload
+            ]
+            result = sp.run(cmd, capture_output=True, text=True, timeout=timeout + 5)
+            if result.returncode == 0 and result.stdout:
+                data = json.loads(result.stdout)
+                choices = data.get("choices", [])
+                response = choices[0]["message"]["content"].strip() if choices else ""
+        else:
+            print(f"  [LLM] Unknown provider '{llm_cfg['provider']}' — fail-open", file=sys.stderr)
+            return True
+
+        # Parse YES/NO response
+        if response:
+            first_word = response.split()[0].upper().rstrip(".,!:") if response else ""
+            if first_word == "NO" or response.upper().startswith("NO"):
+                print(f"  [LLM] Rejected CRITICAL: {title[:80]}", file=sys.stderr)
+                return False
+            if first_word == "YES" or response.upper().startswith("YES"):
+                print(f"  [LLM] Confirmed CRITICAL: {title[:80]}", file=sys.stderr)
+                return True
+            # Ambiguous response — fail open
+            print(f"  [LLM] Ambiguous '{response[:50]}' — fail-open: {title[:80]}", file=sys.stderr)
+            return True
+        else:
+            print(f"  [LLM] Empty response — fail-open: {title[:80]}", file=sys.stderr)
+            return True
+    except Exception as e:
+        print(f"  [LLM] Verification failed ({e}) — fail-open: {title[:80]}", file=sys.stderr)
+    return True  # Fail open — if LLM is down, let CRITICAL through
+
+
 def classify_items(items, keywords, config, country_profile):
-    """Classify items by threat level using keyword patterns."""
+    """Classify items by threat level using keyword patterns + LLM verification for CRITICAL.
+
+    Pipeline:
+    1. Regex pre-filter: match against CRITICAL/HIGH/MEDIUM patterns
+    2. Negative pattern filter: disqualify false-positive CRITICAL candidates
+    3. LLM verification: CRITICAL candidates verified by local qwen3:8b (zero cost)
+    4. Items failing CRITICAL verification get downgraded to HIGH
+    """
     local_keywords = []
     if country_profile:
         local_keywords = country_profile.get("threat_keywords_local", [])
-    
+
     classified = []
-    
+
     for item in items:
         title = item.get("title", "").lower()
         description = item.get("description", "").lower()
-        
+
         # Skip homepage/nav-soup items — they have no meaningful title
-        if not title or len(title) < 15 or title.endswith("...") == False and (
-            "sign in" in title.lower() or
-            "register" in title.lower() or
-            "latest news" in title.lower() and "attack" not in title.lower() or
-            "page not found" in title.lower() or
-            "404" in title
-        ):
-            pass  # still process but won't match well
-        
+        if not title or len(title) < 15:
+            continue
+
         # For web-scraped whole-page items (description looks like nav soup),
         # only use the title for threat matching, not full-page body
         is_nav_soup = any(nav in description[:200] for nav in [
             "sign in", "register", "search", "skip to", "main content", "cookie", "subscribe"
         ])
-        
+
         # Use title + description (but not nav soup as raw)
         raw = f"{title} {description if not is_nav_soup else ''}"
-        
+
         if not raw.strip() or len(raw.strip()) < 15:
             continue
-        
+
         level = None
         matched_patterns = []
-        
+
         # For nav soup items, only title can trigger (stricter)
         scan_text = title if is_nav_soup else raw.lower()
-        
+
         # Check each severity level
         for severity in ["critical", "high", "medium"]:
             patterns = keywords.get(severity, {}).get("patterns", {})
@@ -505,12 +639,32 @@ def classify_items(items, keywords, config, country_profile):
                     break
             if level:
                 break
-        
-        if level:
-            item["threat_level"] = level
-            item["matched_patterns"] = matched_patterns[:3]
-            classified.append(item)
-    
+
+        if not level:
+            continue
+
+        # --- CRITICAL validation pipeline ---
+        if level == "critical":
+            # Step 1: Check negative patterns (fast regex disqualification)
+            is_negative, neg_pattern = _check_negative_patterns(scan_text, keywords)
+            if is_negative:
+                print(f"  [NEG] Downgraded CRITICAL→HIGH (matched: {neg_pattern[:50]}): {title[:80]}", file=sys.stderr)
+                level = "high"
+            else:
+                # Step 2: Source tier check — non-government single sources need LLM verification
+                source_tier = item.get("source_tier", 9)
+                if source_tier <= 0:
+                    # Government source (Tier 0) — trust directly
+                    print(f"  [GOV] CRITICAL from Tier 0 source — trusted: {title[:80]}", file=sys.stderr)
+                else:
+                    # Step 3: LLM verification for non-government CRITICAL
+                    if not _llm_verify_critical(item, config):
+                        level = "high"
+
+        item["threat_level"] = level
+        item["matched_patterns"] = matched_patterns[:3]
+        classified.append(item)
+
     return classified
 
 # ------- Main Scanner -------

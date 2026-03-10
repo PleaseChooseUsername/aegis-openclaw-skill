@@ -23,21 +23,32 @@ SCRIPTS_DIR = SKILL_DIR / "scripts"
 DATA_DIR = Path(os.environ.get("AEGIS_DATA_DIR", os.path.expanduser("~/.openclaw/aegis-data")))
 ALERT_COOLDOWN_FILE = DATA_DIR / "last_alert_time.json"
 
-# Minimum minutes between channel posts (avoid spam during sustained attacks)
-ALERT_COOLDOWN_MINUTES = 60
+# Cooldown between channel posts (avoid spam)
+# Default 4h for single-source CRITICAL; 60min if corroborated by 2+ distinct sources
+ALERT_COOLDOWN_MINUTES = 240
+ALERT_COOLDOWN_CORROBORATED_MINUTES = 60
 
 
-def should_alert():
+def should_alert(corroborated=False):
     """Check if we're past the cooldown period since last alert."""
+    cooldown = ALERT_COOLDOWN_CORROBORATED_MINUTES if corroborated else ALERT_COOLDOWN_MINUTES
     try:
         if ALERT_COOLDOWN_FILE.exists():
             data = json.loads(ALERT_COOLDOWN_FILE.read_text())
             last_time = data.get("last_alert_ts", 0)
             elapsed_min = (time.time() - last_time) / 60
-            return elapsed_min >= ALERT_COOLDOWN_MINUTES
+            return elapsed_min >= cooldown
     except:
         pass
     return True
+
+
+def is_corroborated(critical_threats):
+    """Check if CRITICAL threats are reported by 2+ distinct sources."""
+    sources = set()
+    for t in critical_threats:
+        sources.add(t.get("source_id", ""))
+    return len(sources) >= 2
 
 
 def mark_alerted():
@@ -185,10 +196,15 @@ def main():
     # CRITICAL ONLY: Post situation update to channel
     # HIGH/MEDIUM are collected silently for morning/evening briefings
     if critical > 0:
-        print(f"[AEGIS] 🔴 {critical} CRITICAL threats detected! Posting to channel.", file=sys.stderr)
-        
-        # Check cooldown to avoid spamming during sustained attacks
-        if should_alert() and token and channel:
+        critical_threats = scan_data.get("threats", {}).get("critical", [])
+        corroborated = is_corroborated(critical_threats)
+        source_count = len(set(t.get("source_id", "") for t in critical_threats))
+
+        label = "CORROBORATED" if corroborated else "single-source"
+        print(f"[AEGIS] 🔴 {critical} CRITICAL threats ({label}, {source_count} sources)", file=sys.stderr)
+
+        # Check cooldown — corroborated threats get shorter cooldown
+        if should_alert(corroborated=corroborated) and token and channel:
             # Post a cold, factual CRITICAL ALERT to the public channel
             subprocess.run(
                 [sys.executable, str(SCRIPTS_DIR / "aegis_channel.py"), "critical"],
@@ -200,14 +216,15 @@ def main():
             print(f"[AEGIS] Critical alert posted to channel.", file=sys.stderr)
         else:
             print(f"[AEGIS] Cooldown active or no credentials — skipping channel post.", file=sys.stderr)
-        
+
         # Also DM the user for critical
-        significant = scan_data.get("threats", {}).get("critical", [])
-        titles = [t.get("title", "?")[:80] for t in significant[:3]]
+        titles = [t.get("title", "?")[:80] for t in critical_threats[:3]]
         print(json.dumps({
             "alert": "critical",
-            "message": f"🚨 CRITICAL: {critical} imminent threat(s):\n" + "\n".join(f"• {t}" for t in titles),
-            "threats": significant[:5]
+            "corroborated": corroborated,
+            "source_count": source_count,
+            "message": f"🚨 CRITICAL ({label}): {critical} threat(s):\n" + "\n".join(f"• {t}" for t in titles),
+            "threats": critical_threats[:5]
         }))
     elif force:
         print(json.dumps({"status": "ok", "counts": counts}))

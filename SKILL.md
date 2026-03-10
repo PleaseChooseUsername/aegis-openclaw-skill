@@ -18,9 +18,9 @@ requires:
 
 # AEGIS — Automated Emergency Geopolitical Intelligence System
 
-Civilian-first threat intelligence for conflict zones. Monitors 30+ sources (RSS, web, APIs, OSINT aggregators) with two delivery modes:
+Civilian-first threat intelligence for conflict zones. Monitors 28+ sources (RSS, web, APIs, OSINT aggregators) with two delivery modes:
 
-1. **CRITICAL-only scan** (every 15 min) — Only posts when lives are in immediate danger
+1. **CRITICAL-only scan** (every 15 min) — Posts ONLY for verified, active emergencies (3-phase validation)
 2. **Morning/evening briefings** (8am + 8pm local) — Agent-powered situation reports with actionable guidance
 
 Powered by **World Monitor** (real-time geopolitical intelligence API) and **LiveUAMap** (verified OSINT event feed), supplemented by government sources, major news agencies, and aviation data.
@@ -32,6 +32,7 @@ Powered by **World Monitor** (real-time geopolitical intelligence API) and **Liv
 - **curl** — used for all HTTP fetching (RSS, web, APIs). Pre-installed on most systems.
 - **python3** (3.8+) — runs all scripts. No extra pip packages needed (stdlib only).
 - **No API keys required** for baseline 23 sources. Optional: NewsAPI free tier for expanded coverage.
+- **LLM (optional)** — Improves CRITICAL alert accuracy via semantic verification. See [LLM Verification](#llm-verification) below.
 
 ## Quick Start
 
@@ -135,14 +136,57 @@ No telemetry. No analytics. No phone-home.
 | Level | Meaning | Trigger |
 |-------|---------|---------|
 | 🔴 CRITICAL | Immediate physical danger **in user's country** | Missiles inbound, sirens, shelter orders, airport shutdown, CBRN |
-| 🟠 HIGH | Significant regional threat | Attacks on neighbors, strait disrupted, flights cancelled |
+| 🟠 HIGH | Significant regional threat | Attacks on neighbors, strait disrupted, flights cancelled, general "UAE hit by" context |
 | ℹ️ MEDIUM | Situational awareness | Regional strikes, diplomacy, oil prices, sanctions |
 
-CRITICAL is reserved for "act now, your life may be in danger." Regional developments are HIGH.
+CRITICAL is reserved for "act now, your life may be in danger." Regional developments and background context are HIGH.
+
+### CRITICAL Validation Pipeline (v3.2)
+
+CRITICAL alerts go through 3-phase validation to eliminate false positives:
+
+1. **Regex pre-filter** — Tightened patterns match only active attacks, sirens, shelter orders
+2. **Negative pattern filter** — Disqualifies: past tense ("has been hit"), sports, analysis, speculation, historical context
+3. **LLM verification** (optional) — Confirms the item describes an ACTIVE emergency
+
+Additionally:
+- **Government trust** — Tier 0 sources (NCEMA, government) bypass LLM verification
+- **Source corroboration** — Single source: 4h cooldown; 2+ sources: 1h cooldown
+- **Fail-open safety** — If LLM unavailable or disabled, CRITICAL alerts pass through (safety first)
+
+### LLM Verification
+
+LLM verification is **optional** but recommended. It adds a semantic check that catches false positives the regex filters miss (e.g., "cricket match cancelled due to war" triggering CRITICAL).
+
+**Three modes** (configured in `aegis-config.json` under `"llm"`):
+
+| Mode | Provider | Cost | Accuracy | Setup |
+|------|----------|------|----------|-------|
+| **Local Ollama** | `"ollama"` | Free (runs on your GPU) | Best | Install [Ollama](https://ollama.ai), pull a model |
+| **OpenAI-compatible API** | `"openai"` | ~$0.001/verification | Best | Any OpenAI-compatible endpoint (OpenRouter, Together, vLLM, LiteLLM, etc.) |
+| **No LLM** | `"none"` | Free | Good (regex + negative patterns only) | No setup needed |
+
+**Without LLM:** AEGIS still works well — the regex pre-filter and negative pattern filter catch most false positives. You may see occasional false CRITICAL alerts that would have been caught by LLM verification.
+
+**Config examples:**
+
+```json
+// Local Ollama (recommended if you have a GPU)
+"llm": { "enabled": true, "provider": "ollama", "endpoint": "http://localhost:11434", "model": "qwen3:8b" }
+
+// OpenRouter (cheap cloud API)
+"llm": { "enabled": true, "provider": "openai", "endpoint": "https://openrouter.ai/api", "model": "meta-llama/llama-3-8b-instruct", "api_key": "sk-or-..." }
+
+// No LLM (regex-only, no external calls)
+"llm": { "enabled": false, "provider": "none" }
+```
+
+The onboarding wizard (`aegis_onboard.py`) will help you choose during setup.
 
 ### Anti-Hoax Protocol
-- Tier 0-1 sources: can trigger alerts directly
-- Tier 2+: require corroboration from ≥1 Tier 0-1 source
+- Tier 0 sources: trusted directly (government/emergency)
+- Tier 1+ CRITICAL candidates: must pass LLM semantic verification
+- Tier 2+: require corroboration from ≥1 Tier 0-1 source for HIGH
 - Social media: excluded entirely
 - Extraordinary claims: require ≥3 independent sources
 
@@ -168,7 +212,7 @@ Each briefing includes:
 | **Live feed** | Every 5 min (optional) | Discrete verified events from LiveUAMap + World Monitor |
 
 ### Anti-Spam
-- CRITICAL scan: 60-minute cooldown between channel posts
+- CRITICAL scan: 4-hour cooldown (single source) / 1-hour cooldown (multi-source corroborated)
 - Live feed: 5-minute batch interval, max 8 events per post
 - Briefings: Agent-powered, pin to channel, once per cycle
 
@@ -196,6 +240,7 @@ See `references/config-reference.md` for all configuration options.
 
 ## Cost
 
-- **Baseline (no API keys):** FREE with Copilot or local models; ~$0.03-0.05/day with commercial LLMs
-- **All 23 sources:** Free (RSS + web scraping + public APIs)
+- **Sources (30+):** Free (RSS + web scraping + public APIs)
+- **LLM verification (optional):** Free with Ollama; ~$0.001/check with cloud APIs; or disabled (regex-only)
+- **Briefings:** Free with Copilot or local models; ~$0.03-0.05/day with commercial LLMs
 - **Optional NewsAPI:** Free tier (100 req/day) is sufficient

@@ -41,6 +41,15 @@ Config file location: `~/.openclaw/aegis-config.json`
 
   "scan_interval_minutes": 15,  // How often to scan sources (min 5, recommended 15)
 
+  "llm": {
+    "enabled": true,            // Enable LLM verification of CRITICAL alerts (default: true)
+    "provider": "ollama",       // "ollama" | "openai" | "none"
+    "endpoint": "http://localhost:11434",  // LLM API base URL
+    "model": "qwen3:8b",       // Model name/ID
+    "api_key": "",              // API key (only needed for "openai" provider)
+    "timeout": 30               // Request timeout in seconds
+  },
+
   "api_keys": {
     "newsapi": null             // Optional: newsapi.org key (100 req/day free)
   },
@@ -70,6 +79,34 @@ Config file location: `~/.openclaw/aegis-config.json`
   "scan_interval_minutes": 15
 }
 ```
+
+## LLM Verification Modes
+
+LLM verification is **optional**. Without it, AEGIS uses regex + negative pattern filtering (good accuracy). With it, CRITICAL alerts get an extra semantic check (best accuracy).
+
+### Local Ollama (free, private)
+```json
+{
+  "llm": { "enabled": true, "provider": "ollama", "endpoint": "http://localhost:11434", "model": "qwen3:8b" }
+}
+```
+Requires [Ollama](https://ollama.ai) installed with a model pulled. Any model works — smaller models (1-3B) are faster, larger (8B+) are more accurate.
+
+### OpenAI-compatible API (cloud)
+```json
+{
+  "llm": { "enabled": true, "provider": "openai", "endpoint": "https://openrouter.ai/api", "model": "meta-llama/llama-3-8b-instruct", "api_key": "sk-or-..." }
+}
+```
+Works with any OpenAI-compatible endpoint: OpenRouter, Together AI, Fireworks, local vLLM/LiteLLM, etc. Cost: ~$0.001 per verification.
+
+### No LLM (regex-only)
+```json
+{
+  "llm": { "enabled": false, "provider": "none" }
+}
+```
+Default if no `llm` section is present. Uses regex + negative patterns only. Works well — you may see occasional false CRITICAL alerts that LLM would have caught.
 
 ## Common Country Codes
 
